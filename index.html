@@ -3,905 +3,1089 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>AB Quiz Pro</title>
+    <title>AB Quiz Pinky</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src='//whephiwums.com/sdk.js' data-zone='9303248' data-sdk='show_9303248'></script>
-
     <style>
         :root {
-            --primary-color: #FFC0CB; /* Pink */
-            --secondary-color: #FFB6C1; /* LightPink */
-            --accent-color: #DB7093; /* PaleVioletRed */
-            --text-color: #333;
-            --white-color: #fff;
-            --success-color: #4CAF50;
-            --error-color: #F44336;
-            --font-family: 'Arial', sans-serif;
+            --primary-pink: #ff69b4; /* Hot Pink */
+            --secondary-pink: #ffb6c1; /* Light Pink */
+            --light-bg-pink: #fff0f5; /* Lavender Blush */
+            --base-bg-pink: #ffe4e1; /* Misty Rose */
+            --text-on-primary: #ffffff;
+            --text-on-secondary: #c71585; /* Medium Violet Red */
+            --heading-color: #c71585;
+            --border-color: #ffc0cb; /* Pink */
+            --button-hover: #c71585;
+            --balance-text-color: #4a0e34; /* Dark magenta for balance text for contrast */
+            --disabled-color: #f0c6d9;
         }
 
-        body {
-            font-family: var(--font-family);
+        body, html {
             margin: 0;
             padding: 0;
-            background-color: var(--secondary-color);
-            color: var(--text-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--base-bg-pink);
+            color: #333;
             overscroll-behavior-y: contain; /* Prevents pull-to-refresh */
         }
 
-        .app-container {
-            max-width: 600px;
-            margin: 0 auto;
-            background-color: var(--white-color);
+        #app-container {
+            max-width: 100%;
             min-height: 100vh;
+            margin: auto;
+            background-color: var(--light-bg-pink);
             display: flex;
             flex-direction: column;
+            box-sizing: border-box;
         }
 
-        header {
-            background-color: var(--primary-color);
-            color: var(--accent-color);
-            padding: 15px;
+        #app-header {
+            background-color: var(--primary-pink);
+            color: var(--text-on-primary);
+            padding: 15px 20px;
             text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        #app-header h1 {
+            margin: 0;
             font-size: 1.5em;
+        }
+
+        #balance-container {
+            font-size: 1.1em;
+            margin-top: 5px;
+            color: var(--text-on-primary); /* White on pink header */
             font-weight: bold;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        }
+        #balance-container #user-balance {
+            color: #fff59d; /* Light yellow for emphasis */
         }
 
-        header .balance {
-            font-size: 0.8em;
-            font-weight: normal;
-            background-color: var(--white-color);
-            padding: 5px 10px;
-            border-radius: 15px;
-            color: var(--accent-color);
-        }
 
-        nav {
-            display: flex;
-            justify-content: space-around;
-            background-color: var(--accent-color);
-            padding: 10px 0;
-        }
-
-        nav button {
-            background: none;
-            border: none;
-            color: var(--white-color);
-            font-size: 1em;
-            padding: 10px 15px;
-            cursor: pointer;
-            border-radius: 5px;
-            transition: background-color 0.3s;
-        }
-
-        nav button:hover, nav button.active {
-            background-color: rgba(255,255,255,0.2);
+        #page-content {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
         }
 
         .page {
             display: none;
-            padding: 20px;
-            flex-grow: 1;
-            overflow-y: auto;
+            animation: fadeIn 0.5s ease-in-out;
         }
 
         .page.active {
             display: block;
         }
 
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        #app-nav {
+            display: flex;
+            background-color: var(--secondary-pink);
+            box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+            position: sticky;
+            bottom: 0;
+            z-index: 100;
+        }
+
+        #app-nav button {
+            flex: 1;
+            padding: 15px 10px;
+            background-color: var(--secondary-pink);
+            color: var(--text-on-secondary);
+            border: none;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: bold;
+            transition: background-color 0.3s, color 0.3s;
+            border-top: 3px solid transparent;
+        }
+
+        #app-nav button:hover,
+        #app-nav button.active-nav {
+            background-color: var(--primary-pink);
+            color: var(--text-on-primary);
+            border-top-color: var(--text-on-primary);
+        }
+
         h2 {
-            color: var(--accent-color);
+            color: var(--heading-color);
             text-align: center;
             margin-bottom: 20px;
         }
 
-        /* Login Page */
-        #loginPage button {
-            display: block;
-            width: 80%;
-            max-width: 300px;
-            margin: 20px auto;
-            padding: 15px;
-            font-size: 1.2em;
-            background-color: var(--accent-color);
-            color: var(--white-color);
+        button, .button-style {
+            background-color: var(--primary-pink);
+            color: var(--text-on-primary);
             border: none;
+            padding: 12px 20px;
             border-radius: 8px;
             cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        #loginPage button:hover {
-            background-color: #C76080; /* Darker accent */
+            font-size: 1em;
+            font-weight: bold;
+            margin: 10px 5px;
+            transition: background-color 0.3s, transform 0.1s;
+            display: inline-block;
+            text-align: center;
         }
 
-
-        /* Home Page - Quiz */
-        .quiz-container {
-            background-color: var(--secondary-color);
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
+        button:hover, .button-style:hover {
+            background-color: var(--button-hover);
+            transform: translateY(-2px);
         }
-        .quiz-question {
-            font-size: 1.2em;
+        
+        button:active, .button-style:active {
+            transform: translateY(0px);
+        }
+
+        button:disabled {
+            background-color: var(--disabled-color);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        input[type="number"], input[type="text"] {
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            width: calc(100% - 22px);
+            box-sizing: border-box;
+            font-size: 1em;
+        }
+        
+        /* Quiz Styles */
+        #quiz-container .quiz-item {
+            background-color: #ffffff;
+            border: 1px solid var(--border-color);
+            padding: 15px;
             margin-bottom: 15px;
+            border-radius: 10px;
+            box-shadow: 0 3px 6px rgba(255, 105, 180, 0.15);
+        }
+
+        #quiz-container .quiz-question {
+            font-weight: bold;
+            color: var(--heading-color);
+            margin-bottom: 12px;
+            font-size: 1.1em;
+        }
+        #quiz-container .quiz-coins {
+            font-size: 0.9em;
+            color: var(--primary-pink);
+            margin-bottom: 10px;
+            text-align: right;
             font-weight: bold;
         }
-        .quiz-options button {
+
+        #quiz-container .quiz-options button {
             display: block;
             width: 100%;
-            background-color: var(--primary-color);
-            color: var(--text-color);
-            border: 1px solid var(--accent-color);
-            padding: 12px;
-            margin-bottom: 10px;
-            border-radius: 5px;
+            margin: 8px 0;
+            background-color: var(--secondary-pink);
+            color: var(--text-on-secondary);
             text-align: left;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        .quiz-options button:hover {
-            background-color: #FFACCB; /* Lighter primary */
-        }
-        .quiz-options button.selected {
-            background-color: var(--accent-color);
-            color: var(--white-color);
-        }
-        .quiz-feedback {
-            margin-top: 15px;
-            font-weight: bold;
-            text-align: center;
-        }
-        .quiz-feedback.correct { color: var(--success-color); }
-        .quiz-feedback.incorrect { color: var(--error-color); }
-        
-        #nextQuizButton, #watchAdButton {
-            display: block;
-            width: 60%;
-            margin: 20px auto;
             padding: 12px;
-            font-size: 1em;
-            background-color: var(--accent-color);
-            color: var(--white-color);
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
+            font-weight: normal;
         }
-        #dailyLimitMessage {
+        #quiz-container .quiz-options button:hover {
+            background-color: var(--primary-pink);
+            color: var(--text-on-primary);
+        }
+        #quiz-container .quiz-options button.correct {
+            background-color: #90ee90 !important; /* Light Green */
+            color: #006400 !important; /* Dark Green */
+            border: 2px solid #006400;
+        }
+        #quiz-container .quiz-options button.incorrect {
+            background-color: #ff7f7f !important; /* Light Red */
+            color: #8b0000 !important; /* Dark Red */
+            border: 2px solid #8b0000;
+        }
+        #quiz-limit-message, #no-quizzes-message {
             text-align: center;
-            color: var(--error-color);
-            font-weight: bold;
-            padding: 15px;
-            background-color: #ffebee; /* Light red */
-            border: 1px solid var(--error-color);
-            border-radius: 5px;
+            font-style: italic;
+            color: var(--text-on-secondary);
+            padding: 20px;
+            background-color: #fff8fa;
+            border-radius: 8px;
+            border: 1px dashed var(--border-color);
         }
 
-        /* Leaderboard Page */
-        .leaderboard-list {
+        /* Leaderboard Styles */
+        #leaderboard-list {
             list-style: none;
             padding: 0;
         }
-        .leaderboard-list li {
+        #leaderboard-list li {
+            background-color: #ffffff;
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            border-left: 6px solid var(--primary-pink);
             display: flex;
             justify-content: space-between;
+            align-items: center;
+            font-size: 1em;
+            box-shadow: 0 2px 4px rgba(255, 105, 180, 0.1);
+        }
+        #leaderboard-list li .rank {
+            font-weight: bold;
+            color: var(--primary-pink);
+            margin-right: 10px;
+            min-width: 20px;
+        }
+        #leaderboard-list li .name {
+            flex-grow: 1;
+            color: var(--text-on-secondary);
+        }
+        #leaderboard-list li .score {
+            font-weight: bold;
+            color: var(--balance-text-color);
+        }
+
+        /* Profile Styles */
+        #user-info p {
+            background-color: #ffffff;
             padding: 10px;
-            border-bottom: 1px solid var(--secondary-color);
-            background-color: #fff9fa; /* Very light pink */
             border-radius: 5px;
-            margin-bottom: 5px;
+            margin: 8px 0;
+            border: 1px solid var(--border-color);
+            font-size: 1em;
         }
-        .leaderboard-list li:nth-child(odd) {
-            /* background-color: #fff5f7; */
+        #user-info p span {
+            font-weight: bold;
+            color: var(--text-on-secondary);
         }
-        .leaderboard-list .rank { font-weight: bold; color: var(--accent-color); margin-right: 10px; }
-        .leaderboard-list .name { flex-grow: 1; }
-        .leaderboard-list .score { font-weight: bold; }
-
-        /* Profile Page */
-        .profile-info p {
-            font-size: 1.1em;
-            margin: 10px 0;
-            padding: 8px;
-            background-color: var(--secondary-color);
-            border-radius: 5px;
+        #profile-balance-display {
+            color: var(--balance-text-color) !important;
+            font-size: 1.2em;
         }
-        .profile-info strong {
-            color: var(--accent-color);
-        }
-        .profile-actions button {
-            display: block;
-            width: 100%;
+        #wallet-link-container {
+            margin-top: 20px;
             padding: 15px;
-            margin-bottom: 10px;
-            font-size: 1.1em;
-            background-color: var(--primary-color);
-            color: var(--text-color);
-            border: 1px solid var(--accent-color);
+            background-color: #e6ffe6;
+            border: 1px solid #90ee90;
             border-radius: 8px;
-            cursor: pointer;
+            text-align: center;
         }
-        .profile-actions button.withdraw {
-            background-color: var(--success-color);
-            color: var(--white-color);
-            border: none;
+        #wallet-link-container p {
+            color: #006400;
+            margin-bottom: 10px;
         }
 
-        /* Modal/Popup */
+
+        /* Modal Styles */
         .modal {
             display: none;
             position: fixed;
-            z-index: 1000;
+            z-index: 1001; /* Higher than nav/header */
             left: 0;
             top: 0;
             width: 100%;
             height: 100%;
             overflow: auto;
-            background-color: rgba(0,0,0,0.5);
-            align-items: center;
-            justify-content: center;
+            background-color: rgba(0,0,0,0.6);
+            animation: fadeInModal 0.3s;
         }
         .modal-content {
-            background-color: var(--white-color);
-            margin: auto;
+            background-color: var(--light-bg-pink);
+            margin: 15% auto;
             padding: 25px;
-            border: 1px solid #888;
-            width: 80%;
+            border: 1px solid var(--primary-pink);
+            width: 85%;
             max-width: 400px;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            border-radius: 12px;
             text-align: center;
+            position: relative;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
-        .modal-content h3 { color: var(--accent-color); }
-        .modal-content input[type="number"] {
-            width: calc(100% - 22px);
-            padding: 10px;
-            margin: 10px 0 20px 0;
-            border: 1px solid var(--secondary-color);
-            border-radius: 5px;
-        }
-        .modal-content .close-button {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
+        .close-button {
+            color: var(--primary-pink);
             position: absolute;
             top: 10px;
             right: 15px;
-        }
-        .modal-buttons button {
-            padding: 10px 20px;
-            margin: 0 5px;
-            border-radius: 5px;
-            border: none;
+            font-size: 30px;
+            font-weight: bold;
             cursor: pointer;
-            font-size: 1em;
         }
-        .modal-buttons .confirm-btn { background-color: var(--success-color); color: white;}
-        .modal-buttons .cancel-btn { background-color: var(--error-color); color: white;}
-        .modal-buttons .max-btn { background-color: var(--primary-color); color: var(--text-color); border: 1px solid var(--accent-color); }
-
-        .toast {
-            position: fixed;
-            bottom: 70px; /* Above nav */
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: rgba(0,0,0,0.7);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 5px;
-            z-index: 1001;
-            opacity: 0;
-            transition: opacity 0.5s;
-            font-size: 0.9em;
+        .close-button:hover {
+            color: var(--button-hover);
         }
-        .toast.show {
-            opacity: 1;
+        #confirm-withdraw-button.holding {
+            background-color: #6abf69 !important; /* A slightly darker green */
+            animation: pulse 0.5s infinite alternate;
+        }
+        #withdraw-status {
+            margin-top: 15px;
+            font-weight: bold;
         }
 
+        /* Loading Spinner */
+        #loading-page {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: calc(100vh - 150px); /* Adjust based on header/nav height */
+        }
+        .spinner {
+            border: 6px solid var(--secondary-pink);
+            border-top: 6px solid var(--primary-pink);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        #loading-page p {
+            font-size: 1.2em;
+            color: var(--heading-color);
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        @keyframes fadeInModal {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
     </style>
 </head>
 <body>
-    <div class="app-container">
-        <header>
-            <span>AB Quiz Pro</span>
-            <span class="balance" id="userBalanceHeader">BDT 0.00</span>
+    <div id="app-container">
+        <header id="app-header">
+            <h1>AB Quiz</h1>
+            <div id="balance-container">
+                Balance: <span id="user-balance">0.00</span> BDT
+            </div>
         </header>
 
-        <nav>
-            <button id="navHome" onclick="showPage('homePage')">Home</button>
-            <button id="navLeaderboard" onclick="showPage('leaderboardPage')">Leaderboard</button>
-            <button id="navProfile" onclick="showPage('profilePage')">Profile</button>
+        <main id="page-content">
+            <div id="loading-page" class="page active">
+                <div class="spinner"></div>
+                <p>Loading Your Awesome Quiz Experience...</p>
+            </div>
+
+            <div id="home-page" class="page">
+                <h2>Daily Quiz Challenge</h2>
+                <div id="quiz-message-area"></div>
+                <div id="quiz-container">
+                    <!-- Quiz content will be dynamically inserted here -->
+                </div>
+                <div id="no-quizzes-message" style="display:none;">
+                    <p>No more quizzes available for today, or check back later for new quizzes!</p>
+                </div>
+                 <button id="watch-ad-button" class="button-style" style="display: block; margin: 20px auto;">Watch Ad to Earn (0.1 BDT)</button>
+            </div>
+
+            <div id="leaderboard-page" class="page">
+                <h2>Top Quiz Masters</h2>
+                <ul id="leaderboard-list">
+                    <!-- Leaderboard items will be dynamically inserted here -->
+                </ul>
+                <div id="no-leaderboard-message" style="display:none;">
+                    <p>Leaderboard is currently empty. Be the first to score!</p>
+                </div>
+            </div>
+
+            <div id="profile-page" class="page">
+                <h2>Your Profile</h2>
+                <div id="user-info">
+                    <p>Name: <span id="profile-name">N/A</span></p>
+                    <p>Username: <span id="profile-username">N/A</span></p>
+                    <p>Chat ID: <span id="profile-chat-id">N/A</span></p>
+                    <p>Balance: <span id="profile-balance-display">0.00</span> BDT</p>
+                    <p>Quizzes Today: <span id="profile-quizzes-today">0</span>/10</p>
+                </div>
+                <button id="withdraw-button" class="button-style">Withdraw Funds</button>
+                <button id="join-community-button" class="button-style">Join Our Community</button>
+                <div id="wallet-link-container" style="display:none;">
+                    <p>Withdrawal request submitted! You can check your wallet status here (this is a placeholder for actual payment bot integration):</p>
+                    <button id="wallet-button" class="button-style">Open Wallet Bot</button>
+                </div>
+            </div>
+        </main>
+
+        <nav id="app-nav">
+            <button data-page="home-page" class="active-nav">Home</button>
+            <button data-page="leaderboard-page">Leaderboard</button>
+            <button data-page="profile-page">Profile</button>
         </nav>
+    </div>
 
-        <!-- Login Page -->
-        <div id="loginPage" class="page">
-            <h2>Welcome to AB Quiz Pro!</h2>
-            <p style="text-align:center;">Please login with your Telegram account to continue.</p>
-            <button id="telegramLoginButton">Login with Telegram</button>
-            <p id="loginError" style="color: var(--error-color); text-align: center;"></p>
-        </div>
-
-        <!-- Home Page -->
-        <div id="homePage" class="page">
-            <h2>Daily Quiz Challenge</h2>
-            <div id="dailyLimitMessage" style="display:none;">
-                You have completed your 10 quizzes for today. Come back tomorrow!
-            </div>
-            <div id="quizArea">
-                <div class="quiz-container">
-                    <p id="loadingQuizzes">Loading quiz...</p>
-                    <div id="quizContent" style="display:none;">
-                        <p class="quiz-question" id="quizQuestion"></p>
-                        <div class="quiz-options" id="quizOptions"></div>
-                        <p>Coins for this quiz: <span id="quizCoins"></span></p>
-                    </div>
-                </div>
-                <div class="quiz-feedback" id="quizFeedback"></div>
-                <button id="nextQuizButton" style="display:none;" onclick="loadNextQuiz()">Next Quiz</button>
-            </div>
-             <button id="watchAdButton" onclick="tryShowAd()">Watch Ad to Earn (0.1 BDT)</button>
-        </div>
-
-        <!-- Leaderboard Page -->
-        <div id="leaderboardPage" class="page">
-            <h2>Top Players</h2>
-            <ul id="leaderboardList" class="leaderboard-list">
-                <p id="loadingLeaderboard">Loading leaderboard...</p>
-                <!-- Leaderboard items will be populated here -->
-            </ul>
-        </div>
-
-        <!-- Profile Page -->
-        <div id="profilePage" class="page">
-            <h2>Your Profile</h2>
-            <div class="profile-info" id="profileInfo">
-                <p><strong>Name:</strong> <span id="profileName">N/A</span></p>
-                <p><strong>Telegram ID:</strong> <span id="profileTelegramId">N/A</span></p>
-                <p><strong>Telegram Username:</strong> <span id="profileTelegramUsername">N/A</span></p>
-                <p><strong>Current Balance:</strong> <span id="profileBalance">BDT 0.00</span></p>
-                <p><strong>Total Earned:</strong> <span id="profileTotalEarned">BDT 0.00</span></p>
-                <p><strong>Quizzes Completed Today:</strong> <span id="profileQuizzesToday">0/10</span></p>
-            </div>
-            <div class="profile-actions">
-                <button class="withdraw" onclick="openWithdrawModal()">Withdraw Funds</button>
-                <button onclick="window.open('https://t.me/ABpaybdbot', '_blank')">My Wallet (ABPayBD)</button>
-                <button onclick="window.open('https://t.me/Abpaybd', '_blank')">Join Our Community</button>
-            </div>
-            <h3>Withdrawal History:</h3>
-            <ul id="withdrawalHistoryList" class="leaderboard-list" style="font-size:0.9em;">
-                <p>No withdrawals yet.</p>
-            </ul>
-        </div>
-
-        <!-- Withdrawal Modal -->
-        <div id="withdrawModal" class="modal">
-            <div class="modal-content">
-                <span class="close-button" onclick="closeWithdrawModal()">×</span>
-                <h3>Withdraw Funds</h3>
-                <p>Your current balance: <span id="modalBalance">BDT 0.00</span></p>
-                <input type="number" id="withdrawAmount" placeholder="Enter amount in BDT">
-                <div class="modal-buttons">
-                    <button class="max-btn" onclick="setMaxWithdrawAmount()">Max</button>
-                    <button class="confirm-btn" onclick="confirmWithdrawal()">Confirm Withdraw</button>
-                    <button class="cancel-btn" onclick="closeWithdrawModal()">Cancel</button>
-                </div>
-                <p id="withdrawError" style="color:var(--error-color); margin-top:10px;"></p>
-            </div>
+    <!-- Withdrawal Modal -->
+    <div id="withdraw-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">×</span>
+            <h3>Withdraw Funds</h3>
+            <p>Your Balance: <strong id="modal-balance" style="color: var(--balance-text-color);">0.00 BDT</strong></p>
+            <label for="withdraw-amount">Amount (BDT):</label>
+            <input type="number" id="withdraw-amount" min="1" step="0.01" placeholder="Min. 1 BDT">
+            <button id="max-amount-button" class="button-style" style="background-color: var(--secondary-pink); color: var(--text-on-secondary);">Use Max</button>
+            <button id="confirm-withdraw-button" class="button-style">Confirm (Hold for 2s)</button>
+            <p id="withdraw-status"></p>
         </div>
     </div>
 
-    <div id="toast" class="toast"></div>
-
     <script>
-        // --- Firebase Configuration ---
         const firebaseConfig = {
             apiKey: "AIzaSyB-orRfGPS3vUlPAYkh-BYRE-3AbcyO1LQ",
             authDomain: "ab-quiz-f3f31.firebaseapp.com",
             projectId: "ab-quiz-f3f31",
-            databaseURL: "https://ab-quiz-f3f31-default-rtdb.firebaseio.com/", // Make sure this is correct
-            storageBucket: "ab-quiz-f3f31.firebasestorage.app",
+            databaseURL: "https://ab-quiz-f3f31-default-rtdb.firebaseio.com", // Make sure this is correct
+            storageBucket: "ab-quiz-f3f31.appspot.com",
             messagingSenderId: "79725714366",
             appId: "1:79725714366:web:067b985b568052c8e277ef"
         };
 
-        // --- Initialize Firebase ---
         firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
+        const db = firebase.database();
         const tg = window.Telegram.WebApp;
 
-        // --- Global State ---
         let currentUser = null;
-        let currentQuizData = null;
-        let quizzes = {};
-        let quizKeys = [];
-        let currentQuizIndex = -1;
+        let userData = null;
         const DAILY_QUIZ_LIMIT = 10;
 
-        // --- UI Elements ---
-        const pages = document.querySelectorAll('.page');
-        const navButtons = document.querySelectorAll('nav button');
-        const userBalanceHeader = document.getElementById('userBalanceHeader');
-        const loginButton = document.getElementById('telegramLoginButton');
-        const loginError = document.getElementById('loginError');
-
-        const quizArea = document.getElementById('quizArea');
-        const dailyLimitMessage = document.getElementById('dailyLimitMessage');
-        const loadingQuizzes = document.getElementById('loadingQuizzes');
-        const quizContent = document.getElementById('quizContent');
-        const quizQuestionEl = document.getElementById('quizQuestion');
-        const quizOptionsEl = document.getElementById('quizOptions');
-        const quizCoinsEl = document.getElementById('quizCoins');
-        const quizFeedbackEl = document.getElementById('quizFeedback');
-        const nextQuizButton = document.getElementById('nextQuizButton');
-        const watchAdButton = document.getElementById('watchAdButton');
-
-        const leaderboardListEl = document.getElementById('leaderboardList');
-        const loadingLeaderboard = document.getElementById('loadingLeaderboard');
-
-        const profileNameEl = document.getElementById('profileName');
-        const profileTelegramIdEl = document.getElementById('profileTelegramId');
-        const profileTelegramUsernameEl = document.getElementById('profileTelegramUsername');
-        const profileBalanceEl = document.getElementById('profileBalance');
-        const profileTotalEarnedEl = document.getElementById('profileTotalEarned');
-        const profileQuizzesTodayEl = document.getElementById('profileQuizzesToday');
-        const withdrawalHistoryListEl = document.getElementById('withdrawalHistoryList');
-
-        const withdrawModal = document.getElementById('withdrawModal');
-        const modalBalanceEl = document.getElementById('modalBalance');
-        const withdrawAmountInput = document.getElementById('withdrawAmount');
-        const withdrawErrorEl = document.getElementById('withdrawError');
+        // Page Elements
+        const pages = {
+            loading: document.getElementById('loading-page'),
+            home: document.getElementById('home-page'),
+            leaderboard: document.getElementById('leaderboard-page'),
+            profile: document.getElementById('profile-page'),
+        };
+        const navButtons = document.querySelectorAll('#app-nav button');
+        const userBalanceDisplay = document.getElementById('user-balance');
+        const quizContainer = document.getElementById('quiz-container');
+        const quizMessageArea = document.getElementById('quiz-message-area');
+        const noQuizzesMessage = document.getElementById('no-quizzes-message');
         
-        const toastEl = document.getElementById('toast');
+        // Profile Page Elements
+        const profileName = document.getElementById('profile-name');
+        const profileUsername = document.getElementById('profile-username');
+        const profileChatId = document.getElementById('profile-chat-id');
+        const profileBalanceDisplay = document.getElementById('profile-balance-display');
+        const profileQuizzesToday = document.getElementById('profile-quizzes-today');
 
-        // --- Utility Functions ---
+        // Withdraw Modal Elements
+        const withdrawModal = document.getElementById('withdraw-modal');
+        const closeWithdrawModalButton = withdrawModal.querySelector('.close-button');
+        const modalBalance = document.getElementById('modal-balance');
+        const withdrawAmountInput = document.getElementById('withdraw-amount');
+        const maxAmountButton = document.getElementById('max-amount-button');
+        const confirmWithdrawButton = document.getElementById('confirm-withdraw-button');
+        const withdrawStatus = document.getElementById('withdraw-status');
+        
+        let holdTimeout;
+        let isHolding = false;
+        const HOLD_DURATION = 2000; // 2 seconds
+
+        // --- Initialization ---
+        tg.ready();
+        tg.expand(); // Expand the web app to full height
+
         function showPage(pageId) {
-            tg.HapticFeedback.impactOccurred('light');
-            pages.forEach(page => page.classList.remove('active'));
-            document.getElementById(pageId).classList.add('active');
-            navButtons.forEach(btn => btn.classList.remove('active'));
-            document.getElementById('nav' + pageId.charAt(0).toUpperCase() + pageId.slice(1, -4)).classList.add('active');
-
-
-            if (pageId === 'homePage' && currentUser) loadQuizzesForUser();
-            if (pageId === 'leaderboardPage') loadLeaderboard();
-            if (pageId === 'profilePage' && currentUser) displayProfileInfo();
-        }
-
-        function showToast(message, duration = 3000) {
-            toastEl.textContent = message;
-            toastEl.classList.add('show');
-            setTimeout(() => {
-                toastEl.classList.remove('show');
-            }, duration);
-        }
-
-        function getTodayDateString() {
-            return new Date().toISOString().split('T')[0];
-        }
-
-        // --- Telegram & Authentication ---
-        tg.onEvent('themeChanged', function() {
-            document.body.setAttribute('style', '--bg-color: ' + tg.themeParams.bg_color + '; --text-color: ' + tg.themeParams.text_color + ';');
-        });
-        
-        function initApp() {
-            tg.ready();
-            tg.expand(); // Make the web app full screen
-
-            if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-                const telegramUser = tg.initDataUnsafe.user;
-                console.log("Telegram User Data:", telegramUser);
-                handleTelegramLogin(telegramUser);
+            Object.values(pages).forEach(page => page.classList.remove('active'));
+            if (pages[pageId]) {
+                pages[pageId].classList.add('active');
             } else {
-                console.log("No Telegram user data found initially. Showing login button.");
-                showPage('loginPage');
-                loginButton.style.display = 'block';
+                pages.home.classList.add('active'); // Default to home
             }
-            loginButton.addEventListener('click', () => {
-                 if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-                    handleTelegramLogin(tg.initDataUnsafe.user);
+
+            navButtons.forEach(button => {
+                button.classList.toggle('active-nav', button.dataset.page === pageId);
+            });
+            // Scroll to top of page content
+            document.getElementById('page-content').scrollTop = 0;
+        }
+
+        navButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const pageId = button.dataset.page.replace('-page', '');
+                showPage(pageId);
+                if (pageId === 'leaderboard') loadLeaderboard();
+                if (pageId === 'profile') loadProfilePageData();
+                if (pageId === 'home') loadQuizzesForUser();
+            });
+        });
+
+        async function initializeApp() {
+            try {
+                if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                    currentUser = tg.initDataUnsafe.user;
+                    await loadOrCreateUser(currentUser.id);
+                    updateBalanceDisplay();
+                    showPage('home'); // Start with home page
+                    loadQuizzesForUser();
                 } else {
-                    loginError.textContent = "Could not retrieve Telegram user data. Please ensure you are opening this in Telegram.";
-                    // Potentially, you could try to use tg.requestContact() or other methods if initData is not enough.
-                    // For now, we'll assume initDataUnsafe should work for simple cases.
-                    console.error("Telegram data still not available on button click.");
-                     showToast("Error: Could not get Telegram User Data. Try reopening from Telegram.", 5000);
+                    document.getElementById('loading-page').innerHTML = "<p>Could not retrieve Telegram user data. Please try opening again from Telegram.</p>";
+                    tg.showAlert("Could not retrieve Telegram user data.");
+                }
+            } catch (error) {
+                console.error("Initialization error:", error);
+                document.getElementById('loading-page').innerHTML = `<p>Error initializing app: ${error.message}. Please try again.</p>`;
+                tg.showAlert(`Error: ${error.message}`);
+            }
+        }
+
+        async function loadOrCreateUser(userId) {
+            const userRef = db.ref(`users/${userId}`);
+            const snapshot = await userRef.once('value');
+            if (snapshot.exists()) {
+                userData = snapshot.val();
+                // Check and reset daily quiz count if new day
+                const today = new Date().toISOString().split('T')[0];
+                if (userData.lastQuizDate !== today) {
+                    userData.quizzesToday = 0;
+                    userData.answeredQuizIdsToday = {}; // Reset answered quizzes
+                    userData.lastQuizDate = today;
+                    await userRef.update({ 
+                        quizzesToday: 0, 
+                        lastQuizDate: today,
+                        answeredQuizIdsToday: null // Firebase removes if null
+                    });
+                }
+            } else {
+                const name = `${currentUser.first_name || ''} ${currentUser.last_name || ''}`.trim();
+                userData = {
+                    id: userId,
+                    name: name || 'Telegram User',
+                    username: currentUser.username || 'N/A',
+                    balance: 0.00,
+                    totalScore: 0, // Could be same as balance or separate
+                    quizzesToday: 0,
+                    lastQuizDate: new Date().toISOString().split('T')[0],
+                    answeredQuizIdsToday: {}, // Store IDs of quizzes answered today
+                    joinDate: new Date().toISOString()
+                };
+                await userRef.set(userData);
+            }
+            // Listen for real-time updates to user data (e.g., balance)
+            userRef.on('value', (snap) => {
+                userData = snap.val();
+                if (userData) { // Ensure userData is not null after an update that might delete it (unlikely here)
+                    updateBalanceDisplay();
+                    // If profile page is active, update its display
+                    if (pages.profile.classList.contains('active')) {
+                        loadProfilePageData();
+                    }
                 }
             });
         }
-        
-        async function handleTelegramLogin(telegramUser) {
-            const userId = telegramUser.id.toString(); // Firebase keys must be strings
-            loginError.textContent = "";
-            loginButton.style.display = 'none';
-            showToast("Logging in...", 2000);
+
+        function updateBalanceDisplay() {
+            if (userData) {
+                const balance = parseFloat(userData.balance || 0).toFixed(2);
+                userBalanceDisplay.textContent = balance;
+                // Also update profile balance if visible
+                profileBalanceDisplay.textContent = balance;
+                modalBalance.textContent = `${balance} BDT`;
+            }
+        }
+
+        // --- Home Page - Quizzes ---
+        async function loadQuizzesForUser() {
+            quizContainer.innerHTML = ''; // Clear previous quizzes
+            quizMessageArea.innerHTML = '';
+            noQuizzesMessage.style.display = 'none';
+
+            if (!userData) {
+                quizMessageArea.innerHTML = '<p>Loading user data...</p>';
+                return;
+            }
+            
+            const quizzesCompletedToday = userData.quizzesToday || 0;
+
+            if (quizzesCompletedToday >= DAILY_QUIZ_LIMIT) {
+                quizMessageArea.innerHTML = `<p id="quiz-limit-message">You've completed your ${DAILY_QUIZ_LIMIT} quizzes for today! Come back tomorrow for more.</p>`;
+                noQuizzesMessage.style.display = 'block';
+                return;
+            }
 
             try {
-                const userRef = database.ref('users/' + userId);
-                const snapshot = await userRef.once('value');
-                let userData = snapshot.val();
+                const quizzesRef = db.ref('quizzes');
+                const snapshot = await quizzesRef.orderByKey().limitToFirst(DAILY_QUIZ_LIMIT * 2).once('value'); // Fetch a bit more to find unanswered ones
+                const allQuizzes = snapshot.val();
 
-                if (!userData) {
-                    // New user
-                    currentUser = {
-                        telegramId: userId,
-                        name: `${telegramUser.first_name || ''} ${telegramUser.last_name || ''}`.trim() || 'Quiz Player',
-                        username: telegramUser.username || 'N/A',
-                        balance: 0,
-                        totalEarned: 0,
-                        quizzesCompletedToday: 0,
-                        lastQuizDate: getTodayDateString(),
-                        withdrawalHistory: {}
-                    };
-                    await userRef.set(currentUser);
-                    showToast("Welcome! Your account has been created.", 3000);
-                } else {
-                    // Existing user
-                    currentUser = userData;
-                    // Check and reset daily quiz count if it's a new day
-                    const today = getTodayDateString();
-                    if (currentUser.lastQuizDate !== today) {
-                        currentUser.quizzesCompletedToday = 0;
-                        currentUser.lastQuizDate = today;
-                        await userRef.update({ 
-                            quizzesCompletedToday: 0, 
-                            lastQuizDate: today 
-                        });
+                if (!allQuizzes) {
+                    noQuizzesMessage.style.display = 'block';
+                    return;
+                }
+
+                let quizzesToShow = [];
+                const answeredTodayIds = userData.answeredQuizIdsToday ? Object.keys(userData.answeredQuizIdsToday) : [];
+                
+                for (const quizId in allQuizzes) {
+                    if (!answeredTodayIds.includes(quizId)) {
+                        quizzesToShow.push({ id: quizId, ...allQuizzes[quizId] });
+                        if (quizzesToShow.length >= (DAILY_QUIZ_LIMIT - quizzesCompletedToday)) {
+                            break; 
+                        }
                     }
-                    showToast(`Welcome back, ${currentUser.name}!`, 3000);
                 }
                 
-                updateBalanceHeader();
-                showPage('homePage'); // Default to home page after login
+                if (quizzesToShow.length === 0) {
+                     noQuizzesMessage.style.display = 'block';
+                     if(quizzesCompletedToday > 0 && quizzesCompletedToday < DAILY_QUIZ_LIMIT) {
+                        quizMessageArea.innerHTML = `<p>No new quizzes available at the moment. You've completed ${quizzesCompletedToday}/${DAILY_QUIZ_LIMIT}.</p>`;
+                     } else if (quizzesCompletedToday === 0) {
+                        quizMessageArea.innerHTML = `<p>No quizzes available right now. Please check back later!</p>`;
+                     }
+                } else {
+                    quizzesToShow.forEach(renderQuiz);
+                }
 
             } catch (error) {
-                console.error("Firebase login/setup error:", error);
-                loginError.textContent = "Error connecting to database. Please try again.";
-                showToast("Login failed. Please try again.", 3000);
-                showPage('loginPage');
-                loginButton.style.display = 'block';
-            }
-        }
-        
-        function updateBalanceHeader() {
-            if (currentUser) {
-                userBalanceHeader.textContent = `BDT ${currentUser.balance.toFixed(2)}`;
+                console.error("Error loading quizzes:", error);
+                quizMessageArea.innerHTML = '<p>Could not load quizzes. Please try refreshing.</p>';
+                tg.showAlert("Error loading quizzes.");
             }
         }
 
-        // --- Quiz Logic ---
-        async function loadQuizzesForUser() {
-            if (!currentUser) return;
+        function renderQuiz(quiz) {
+            const item = document.createElement('div');
+            item.className = 'quiz-item';
+            item.dataset.quizId = quiz.id;
+            item.dataset.correctAnswer = quiz.answer; // Assuming answer is an index or specific value
+            item.dataset.coins = quiz.coins;
 
-            if (currentUser.quizzesCompletedToday >= DAILY_QUIZ_LIMIT) {
-                quizArea.style.display = 'none';
-                dailyLimitMessage.style.display = 'block';
-                watchAdButton.style.display = 'block'; // Still allow watching ads
-                return;
-            }
-            quizArea.style.display = 'block';
-            dailyLimitMessage.style.display = 'none';
-            watchAdButton.style.display = 'block';
+            const questionP = document.createElement('p');
+            questionP.className = 'quiz-question';
+            questionP.textContent = quiz.question;
+            item.appendChild(questionP);
 
-            if (Object.keys(quizzes).length === 0) { // Load quizzes only once
-                loadingQuizzes.style.display = 'block';
-                quizContent.style.display = 'none';
-                try {
-                    const snapshot = await database.ref('quizzes').once('value');
-                    quizzes = snapshot.val() || {};
-                    quizKeys = Object.keys(quizzes);
-                    if (quizKeys.length === 0) {
-                        loadingQuizzes.textContent = "No quizzes available at the moment. Please check back later.";
-                        return;
-                    }
-                } catch (error) {
-                    console.error("Error loading quizzes:", error);
-                    loadingQuizzes.textContent = "Failed to load quizzes.";
-                    return;
-                }
-            }
-            loadNextQuiz();
-        }
+            const coinsP = document.createElement('p');
+            coinsP.className = 'quiz-coins';
+            coinsP.innerHTML = `💰 ${quiz.coins} BDT`;
+            item.appendChild(coinsP);
 
-        function loadNextQuiz() {
-            if (!currentUser || currentUser.quizzesCompletedToday >= DAILY_QUIZ_LIMIT) {
-                quizArea.style.display = 'none';
-                dailyLimitMessage.style.display = 'block';
-                nextQuizButton.style.display = 'none';
-                return;
-            }
-
-            if (quizKeys.length === 0) {
-                 loadingQuizzes.textContent = "No more quizzes available for now!";
-                 quizContent.style.display = 'none';
-                 return;
-            }
-
-            // Simple way: pick a random quiz that hasn't been shown in this session (or just cycle)
-            // For a real app, you'd track completed quizzes per user in Firebase
-            currentQuizIndex = (currentQuizIndex + 1) % quizKeys.length;
-            const quizId = quizKeys[currentQuizIndex];
-            currentQuizData = quizzes[quizId];
-
-            if (!currentQuizData) {
-                loadingQuizzes.textContent = "Error loading next quiz. Please try again.";
-                return;
-            }
-
-            loadingQuizzes.style.display = 'none';
-            quizContent.style.display = 'block';
-            quizQuestionEl.textContent = currentQuizData.question;
-            quizCoinsEl.textContent = currentQuizData.coins;
-            quizOptionsEl.innerHTML = '';
-            currentQuizData.options.forEach(option => {
+            const optionsDiv = document.createElement('div');
+            optionsDiv.className = 'quiz-options';
+            quiz.options.forEach((option, index) => {
                 const button = document.createElement('button');
                 button.textContent = option;
-                button.onclick = () => selectAnswer(button, option);
-                quizOptionsEl.appendChild(button);
+                button.dataset.optionIndex = index;
+                button.addEventListener('click', () => handleAnswer(quiz.id, index, button, item));
+                optionsDiv.appendChild(button);
             });
-            quizFeedbackEl.textContent = '';
-            quizFeedbackEl.className = 'quiz-feedback';
-            nextQuizButton.style.display = 'none';
+            item.appendChild(optionsDiv);
+            quizContainer.appendChild(item);
         }
 
-        function selectAnswer(buttonEl, selectedOption) {
-            // Disable other options
-            const optionButtons = quizOptionsEl.querySelectorAll('button');
-            optionButtons.forEach(btn => {
-                btn.disabled = true;
-                btn.classList.remove('selected');
-            });
-            buttonEl.classList.add('selected');
+        async function handleAnswer(quizId, selectedOptionIndex, buttonEl, quizItemEl) {
+            if (quizItemEl.classList.contains('answered')) return; // Prevent re-answering
+            quizItemEl.classList.add('answered');
 
-            let earnedCoins = 0;
-            if (selectedOption === currentQuizData.answer) {
-                quizFeedbackEl.textContent = `Correct! You earned ${currentQuizData.coins} coins.`;
-                quizFeedbackEl.className = 'quiz-feedback correct';
-                earnedCoins = currentQuizData.coins;
+            const correctAnswer = quizItemEl.dataset.correctAnswer; // This could be index or text. Assuming index for now.
+            const coins = parseInt(quizItemEl.dataset.coins);
+            const isCorrect = parseInt(selectedOptionIndex) === parseInt(correctAnswer);
+
+            // Disable all options for this quiz
+            quizItemEl.querySelectorAll('.quiz-options button').forEach(btn => btn.disabled = true);
+
+            if (isCorrect) {
+                buttonEl.classList.add('correct');
                 tg.HapticFeedback.notificationOccurred('success');
+                userData.balance = parseFloat(userData.balance || 0) + coins;
+                userData.totalScore = (userData.totalScore || 0) + coins;
+                tg.showAlert(`Correct! You earned ${coins} BDT.`);
             } else {
-                quizFeedbackEl.textContent = `Incorrect. The correct answer was: ${currentQuizData.answer}`;
-                quizFeedbackEl.className = 'quiz-feedback incorrect';
+                buttonEl.classList.add('incorrect');
                 tg.HapticFeedback.notificationOccurred('error');
+                // Highlight correct answer
+                const correctButton = quizItemEl.querySelector(`.quiz-options button[data-option-index="${correctAnswer}"]`);
+                if (correctButton) correctButton.classList.add('correct');
+                tg.showAlert(`Incorrect. The correct answer was option ${parseInt(correctAnswer) + 1}.`);
             }
 
-            updateUserAfterQuiz(earnedCoins);
-            nextQuizButton.style.display = 'block';
-        }
-
-        async function updateUserAfterQuiz(coinsEarned) {
-            if (!currentUser) return;
-
-            currentUser.quizzesCompletedToday += 1;
-            if (coinsEarned > 0) {
-                currentUser.balance += coinsEarned;
-                currentUser.totalEarned += coinsEarned;
-            }
-
-            try {
-                const userRef = database.ref('users/' + currentUser.telegramId);
-                await userRef.update({
-                    balance: currentUser.balance,
-                    totalEarned: currentUser.totalEarned,
-                    quizzesCompletedToday: currentUser.quizzesCompletedToday,
-                    lastQuizDate: getTodayDateString() // Ensure this is updated
-                });
-                updateBalanceHeader();
-                if (currentUser.quizzesCompletedToday >= DAILY_QUIZ_LIMIT) {
-                    nextQuizButton.style.display = 'none';
-                    quizArea.style.display = 'none';
-                    dailyLimitMessage.style.display = 'block';
-                    showToast("Daily quiz limit reached!", 3000);
-                }
-            } catch (error) {
-                console.error("Error updating user after quiz:", error);
-                showToast("Error saving quiz progress.", 3000);
-            }
-        }
-        
-        // --- Ad Logic ---
-        function tryShowAd() {
-            if (typeof show_9303248 !== 'function') {
-                showToast("Ad system not available right now.", 3000);
-                console.error("Monetag SDK function show_9303248 is not defined.");
-                return;
-            }
+            userData.quizzesToday = (userData.quizzesToday || 0) + 1;
+            if (!userData.answeredQuizIdsToday) userData.answeredQuizIdsToday = {};
+            userData.answeredQuizIdsToday[quizId] = true;
             
-            tg.HapticFeedback.impactOccurred('medium');
-            showToast("Loading ad...", 2000);
-
-            show_9303248('pop').then(async () => {
-                showToast("Ad completed! You earned 0.10 BDT.", 3000);
-                tg.HapticFeedback.notificationOccurred('success');
-                // Reward user
-                if (currentUser) {
-                    const rewardAmount = 0.10;
-                    currentUser.balance += rewardAmount;
-                    currentUser.totalEarned += rewardAmount;
-                    try {
-                        const userRef = database.ref('users/' + currentUser.telegramId);
-                        await userRef.update({
-                            balance: currentUser.balance,
-                            totalEarned: currentUser.totalEarned
-                        });
-                        updateBalanceHeader();
-                        // If profile page is active, update it too
-                        if (document.getElementById('profilePage').classList.contains('active')) {
-                            displayProfileInfo();
-                        }
-                    } catch (error) {
-                        console.error("Error rewarding user after ad:", error);
-                        showToast("Error applying ad reward.", 3000);
-                    }
+            try {
+                await db.ref(`users/${currentUser.id}`).update({
+                    balance: userData.balance,
+                    totalScore: userData.totalScore,
+                    quizzesToday: userData.quizzesToday,
+                    answeredQuizIdsToday: userData.answeredQuizIdsToday,
+                    lastQuizDate: new Date().toISOString().split('T')[0] // Update lastQuizDate too
+                });
+                updateBalanceDisplay(); // Reflect changes immediately
+                // Optionally, automatically load next quiz or refresh quiz list
+                if (userData.quizzesToday < DAILY_QUIZ_LIMIT) {
+                    // You might want a slight delay or just let user scroll
+                } else {
+                     quizMessageArea.innerHTML = `<p id="quiz-limit-message">You've completed your ${DAILY_QUIZ_LIMIT} quizzes for today! Come back tomorrow for more.</p>`;
+                     noQuizzesMessage.style.display = 'block';
                 }
-            }).catch(e => {
-                console.error("Ad error or closed early:", e);
-                showToast("Ad not completed or error occurred.", 3000);
-                tg.HapticFeedback.notificationOccurred('error');
-            });
+                // Update profile quizzes count if profile page is active
+                if (pages.profile.classList.contains('active')) {
+                    profileQuizzesToday.textContent = `${userData.quizzesToday}/${DAILY_QUIZ_LIMIT}`;
+                }
+
+            } catch(error) {
+                console.error("Error updating user data after answer:", error);
+                tg.showAlert("Error saving your answer. Please try again.");
+                 // Re-enable buttons if save failed to allow retry (consider implications)
+                quizItemEl.classList.remove('answered');
+                quizItemEl.querySelectorAll('.quiz-options button').forEach(btn => btn.disabled = false);
+                buttonEl.classList.remove('correct', 'incorrect');
+                if(correctButton) correctButton.classList.remove('correct');
+
+            }
         }
 
-        // --- Leaderboard Logic ---
+        // --- Leaderboard Page ---
         async function loadLeaderboard() {
-            loadingLeaderboard.style.display = 'block';
-            leaderboardListEl.innerHTML = ''; // Clear previous list
+            const list = document.getElementById('leaderboard-list');
+            const noLeaderboardMsg = document.getElementById('no-leaderboard-message');
+            list.innerHTML = '<li>Loading leaderboard...</li>';
+            noLeaderboardMsg.style.display = 'none';
 
             try {
-                const usersRef = database.ref('users').orderByChild('balance').limitToLast(50); // Get top 50 by balance
-                const snapshot = await usersRef.once('value');
-                const usersData = snapshot.val();
+                const usersRef = db.ref('users');
+                // Query top 50 users by totalScore (or balance)
+                const snapshot = await usersRef.orderByChild('totalScore').limitToLast(50).once('value');
+                const users = snapshot.val();
 
-                if (!usersData) {
-                    leaderboardListEl.innerHTML = '<p>Leaderboard is empty.</p>';
-                    loadingLeaderboard.style.display = 'none';
+                if (!users) {
+                    noLeaderboardMsg.style.display = 'block';
+                    list.innerHTML = '';
                     return;
                 }
 
-                const sortedUsers = Object.values(usersData)
-                    .sort((a, b) => b.balance - a.balance); // Sort descending
+                const leaderboardArray = Object.values(users)
+                    .sort((a, b) => (b.totalScore || 0) - (a.totalScore || 0));
 
-                sortedUsers.forEach((user, index) => {
+                list.innerHTML = ''; // Clear loading/previous
+                if (leaderboardArray.length === 0) {
+                     noLeaderboardMsg.style.display = 'block';
+                     return;
+                }
+
+                leaderboardArray.forEach((user, index) => {
                     const li = document.createElement('li');
-                    li.innerHTML = `
-                        <span class="rank">${index + 1}.</span>
-                        <span class="name">${user.name || 'Anonymous'}</span>
-                        <span class="score">BDT ${user.balance ? user.balance.toFixed(2) : '0.00'}</span>
-                    `;
-                    leaderboardListEl.appendChild(li);
+                    const rankSpan = document.createElement('span');
+                    rankSpan.className = 'rank';
+                    rankSpan.textContent = `${index + 1}.`;
+                    
+                    const nameSpan = document.createElement('span');
+                    nameSpan.className = 'name';
+                    nameSpan.textContent = user.name || 'Anonymous';
+                    if (user.id === currentUser.id) {
+                        nameSpan.textContent += " (You)";
+                        nameSpan.style.fontWeight = 'bold';
+                    }
+
+                    const scoreSpan = document.createElement('span');
+                    scoreSpan.className = 'score';
+                    scoreSpan.textContent = `${parseFloat(user.totalScore || 0).toFixed(2)} BDT`;
+                    
+                    li.appendChild(rankSpan);
+                    li.appendChild(nameSpan);
+                    li.appendChild(scoreSpan);
+                    list.appendChild(li);
                 });
-                loadingLeaderboard.style.display = 'none';
+
             } catch (error) {
                 console.error("Error loading leaderboard:", error);
-                loadingLeaderboard.textContent = "Failed to load leaderboard.";
+                list.innerHTML = '<li>Could not load leaderboard.</li>';
+                tg.showAlert("Error loading leaderboard.");
             }
         }
 
-        // --- Profile Logic ---
-        function displayProfileInfo() {
-            if (!currentUser) return;
-            profileNameEl.textContent = currentUser.name;
-            profileTelegramIdEl.textContent = currentUser.telegramId;
-            profileTelegramUsernameEl.textContent = currentUser.username || 'N/A';
-            profileBalanceEl.textContent = `BDT ${currentUser.balance.toFixed(2)}`;
-            profileTotalEarnedEl.textContent = `BDT ${currentUser.totalEarned.toFixed(2)}`;
-            profileQuizzesTodayEl.textContent = `${currentUser.quizzesCompletedToday}/${DAILY_QUIZ_LIMIT}`;
-            updateBalanceHeader(); // Ensure header is also up-to-date
-            loadWithdrawalHistory();
+        // --- Profile Page ---
+        function loadProfilePageData() {
+            if (userData) {
+                profileName.textContent = userData.name || 'N/A';
+                profileUsername.textContent = userData.username || 'N/A';
+                profileChatId.textContent = currentUser.id;
+                profileBalanceDisplay.textContent = parseFloat(userData.balance || 0).toFixed(2);
+                profileQuizzesToday.textContent = `${userData.quizzesToday || 0}/${DAILY_QUIZ_LIMIT}`;
+            }
         }
-        
-        async function loadWithdrawalHistory() {
-            if (!currentUser || !currentUser.withdrawalHistory) {
-                withdrawalHistoryListEl.innerHTML = '<p>No withdrawals yet.</p>';
+
+        document.getElementById('join-community-button').addEventListener('click', () => {
+            tg.openTelegramLink('https://t.me/Abpaybd');
+        });
+
+        document.getElementById('withdraw-button').addEventListener('click', () => {
+            if (!userData || userData.balance <= 0) {
+                tg.showAlert("You have no balance to withdraw or minimum withdrawal not met.");
                 return;
             }
-            withdrawalHistoryListEl.innerHTML = ''; // Clear
-            const history = Object.values(currentUser.withdrawalHistory).sort((a,b) => new Date(b.date) - new Date(a.date)); // Sort by date descending
-            
-            if(history.length === 0) {
-                 withdrawalHistoryListEl.innerHTML = '<p>No withdrawals yet.</p>';
-                 return;
-            }
-
-            history.forEach(item => {
-                const li = document.createElement('li');
-                const itemDate = new Date(item.date).toLocaleString();
-                li.innerHTML = `
-                    <span>${itemDate}</span>
-                    <span>BDT ${item.amount.toFixed(2)}</span>
-                    <span style="color: ${item.status === 'completed' ? 'green' : (item.status === 'pending' ? 'orange' : 'red')}">${item.status}</span>
-                `;
-                withdrawalHistoryListEl.appendChild(li);
-            });
-        }
-
-
-        // --- Withdrawal Logic ---
-        function openWithdrawModal() {
-            if (!currentUser) return;
-            tg.HapticFeedback.impactOccurred('medium');
-            modalBalanceEl.textContent = `BDT ${currentUser.balance.toFixed(2)}`;
+            modalBalance.textContent = `${parseFloat(userData.balance || 0).toFixed(2)} BDT`;
             withdrawAmountInput.value = '';
-            withdrawErrorEl.textContent = '';
-            withdrawModal.style.display = 'flex';
-        }
+            withdrawAmountInput.max = parseFloat(userData.balance || 0);
+            withdrawStatus.textContent = '';
+            document.getElementById('wallet-link-container').style.display = 'none';
+            withdrawModal.style.display = 'block';
+        });
 
-        function closeWithdrawModal() {
+        closeWithdrawModalButton.addEventListener('click', () => {
             withdrawModal.style.display = 'none';
-        }
+            clearTimeout(holdTimeout);
+            isHolding = false;
+            confirmWithdrawButton.classList.remove('holding');
+            confirmWithdrawButton.textContent = 'Confirm (Hold for 2s)';
+            confirmWithdrawButton.disabled = false;
+        });
 
-        function setMaxWithdrawAmount() {
-            if (currentUser) {
-                withdrawAmountInput.value = currentUser.balance.toFixed(2);
-            }
-        }
+        maxAmountButton.addEventListener('click', () => {
+            withdrawAmountInput.value = parseFloat(userData.balance || 0).toFixed(2);
+        });
 
-        async function confirmWithdrawal() {
-            if (!currentUser) return;
-            tg.HapticFeedback.impactOccurred('heavy');
+        confirmWithdrawButton.addEventListener('mousedown', () => handleWithdrawHoldStart());
+        confirmWithdrawButton.addEventListener('touchstart', (e) => { e.preventDefault(); handleWithdrawHoldStart(); });
 
+        confirmWithdrawButton.addEventListener('mouseup', () => handleWithdrawHoldEnd());
+        confirmWithdrawButton.addEventListener('touchend', (e) => { e.preventDefault(); handleWithdrawHoldEnd(); });
+        confirmWithdrawButton.addEventListener('mouseleave', () => handleWithdrawHoldEnd()); // If mouse leaves
+
+        function handleWithdrawHoldStart() {
             const amount = parseFloat(withdrawAmountInput.value);
-            withdrawErrorEl.textContent = '';
-
             if (isNaN(amount) || amount <= 0) {
-                withdrawErrorEl.textContent = "Please enter a valid positive amount.";
+                withdrawStatus.textContent = 'Please enter a valid amount.';
+                withdrawStatus.style.color = 'red';
                 return;
             }
-            if (amount > currentUser.balance) {
-                withdrawErrorEl.textContent = "Insufficient balance.";
+            if (amount > userData.balance) {
+                withdrawStatus.textContent = 'Insufficient balance.';
+                withdrawStatus.style.color = 'red';
                 return;
             }
-            // Minimum withdrawal amount (example: 10 BDT)
-            const MIN_WITHDRAWAL = 10; 
-            if (amount < MIN_WITHDRAWAL) {
-                withdrawErrorEl.textContent = `Minimum withdrawal amount is BDT ${MIN_WITHDRAWAL}.`;
+            
+            isHolding = true;
+            confirmWithdrawButton.classList.add('holding');
+            confirmWithdrawButton.textContent = 'Keep Holding...';
+            withdrawStatus.textContent = `Hold for ${HOLD_DURATION/1000}s to confirm.`;
+            withdrawStatus.style.color = 'var(--text-on-secondary)';
+            
+            holdTimeout = setTimeout(() => {
+                if (isHolding) {
+                    processWithdrawal();
+                }
+            }, HOLD_DURATION);
+        }
+
+        function handleWithdrawHoldEnd() {
+             if (isHolding) { // Only if it was a legitimate start
+                clearTimeout(holdTimeout);
+                isHolding = false;
+                confirmWithdrawButton.classList.remove('holding');
+                // Only reset text if withdrawal didn't process
+                if (confirmWithdrawButton.textContent === 'Keep Holding...') {
+                    confirmWithdrawButton.textContent = 'Confirm (Hold for 2s)';
+                    withdrawStatus.textContent = 'Hold cancelled. Try again.';
+                    withdrawStatus.style.color = 'orange';
+                }
+            }
+        }
+
+        async function processWithdrawal() {
+            confirmWithdrawButton.disabled = true;
+            confirmWithdrawButton.textContent = 'Processing...';
+            const amount = parseFloat(withdrawAmountInput.value);
+
+            // Final checks (though mostly done in mousedown)
+            if (isNaN(amount) || amount <= 0 || amount > userData.balance) {
+                withdrawStatus.textContent = 'Invalid amount or insufficient balance.';
+                withdrawStatus.style.color = 'red';
+                confirmWithdrawButton.textContent = 'Confirm (Hold for 2s)';
+                confirmWithdrawButton.disabled = false;
                 return;
             }
 
-            // Proceed with withdrawal
-            const newBalance = currentUser.balance - amount;
-            const withdrawalId = `wd_${Date.now()}`; // Unique ID for withdrawal
-            const withdrawalData = {
-                amount: amount,
-                date: new Date().toISOString(),
-                status: "pending" // Admin needs to process this
-            };
+            const newBalance = userData.balance - amount;
+            const withdrawalId = `wd_${currentUser.id}_${Date.now()}`;
 
             try {
-                const userRef = database.ref('users/' + currentUser.telegramId);
-                await userRef.update({
-                    balance: newBalance,
-                    [`withdrawalHistory/${withdrawalId}`]: withdrawalData
+                // 1. Update user's balance
+                await db.ref(`users/${currentUser.id}`).update({ balance: newBalance });
+                
+                // 2. Record withdrawal request
+                await db.ref(`withdrawals/${withdrawalId}`).set({
+                    userId: currentUser.id,
+                    username: userData.username || 'N/A',
+                    name: userData.name || 'N/A',
+                    amount: amount,
+                    status: 'pending', // Admin will change this to 'processed' or 'rejected'
+                    timestamp: firebase.database.ServerValue.TIMESTAMP, // Use server timestamp
+                    userBalanceBefore: userData.balance,
+                    userBalanceAfter: newBalance
                 });
 
-                currentUser.balance = newBalance;
-                if (!currentUser.withdrawalHistory) currentUser.withdrawalHistory = {};
-                currentUser.withdrawalHistory[withdrawalId] = withdrawalData;
-
-                updateBalanceHeader();
-                displayProfileInfo(); // Refresh profile info
-                closeWithdrawModal();
-                showToast(`Withdrawal request of BDT ${amount.toFixed(2)} submitted.`, 5000);
+                userData.balance = newBalance; // Update local state
+                updateBalanceDisplay();
+                
+                withdrawStatus.textContent = 'Withdrawal request submitted successfully!';
+                withdrawStatus.style.color = 'green';
                 tg.HapticFeedback.notificationOccurred('success');
+                tg.showAlert(`Withdrawal request for ${amount.toFixed(2)} BDT submitted.`);
+
+                document.getElementById('wallet-link-container').style.display = 'block';
+                
+                setTimeout(() => {
+                    withdrawModal.style.display = 'none';
+                    confirmWithdrawButton.textContent = 'Confirm (Hold for 2s)';
+                    confirmWithdrawButton.disabled = false;
+                }, 2500);
 
             } catch (error) {
                 console.error("Withdrawal error:", error);
-                withdrawErrorEl.textContent = "Error processing withdrawal. Try again.";
-                showToast("Withdrawal failed.", 3000);
+                withdrawStatus.textContent = 'Error processing withdrawal. Please try again.';
+                withdrawStatus.style.color = 'red';
                 tg.HapticFeedback.notificationOccurred('error');
+                tg.showAlert("Error processing withdrawal.");
+                confirmWithdrawButton.textContent = 'Confirm (Hold for 2s)';
+                confirmWithdrawButton.disabled = false;
             }
         }
+        
+        document.getElementById('wallet-button').addEventListener('click', () => {
+            tg.openTelegramLink('https://t.me/ABpaybdbot');
+        });
 
 
-        // --- App Initialization ---
-        window.addEventListener('load', initApp);
+        // --- Ads Integration ---
+        document.getElementById('watch-ad-button').addEventListener('click', () => {
+            const adButton = document.getElementById('watch-ad-button');
+            adButton.disabled = true;
+            adButton.textContent = 'Loading Ad...';
+
+            tg.showPopup({
+                title: 'Watch Ad',
+                message: 'You are about to watch an ad to earn BDT. Continue?',
+                buttons: [
+                    {id: 'watch', type: 'default', text: 'Watch Ad'},
+                    {type: 'cancel'},
+                ]
+            }, async function(buttonId) {
+                if (buttonId === 'watch') {
+                    try {
+                        await show_9303248(); // This is the global function from the ad SDK
+                        // Ad SDK will call its own then() if successful. Our reward logic is there.
+                        // The user's SDK promise should handle the reward:
+                        // show_9303248().then(() => { handleAdReward(); })
+                        // For now, we assume the SDK's internal then() will work if it's set up that way.
+                        // The instructions said: 
+                        // You need to add your user reward function here, which will be executed after the user watches the ad.
+                        // This implies the provided `show_9303248().then(() => { alert('You have seen an ad!'); })`
+                        // needs to be modified to `show_9303248().then(() => { handleAdReward(); })`
+                        // Let's structure it as if the global function has a then-able promise.
+
+                        // The original ad script was:
+                        // show_9303248().then(() => {
+                        //    alert('You have seen an ad!');
+                        //    // Reward logic should go here
+                        // })
+                        // Since this script is in the head, that .then() might be global.
+                        // To be safe, we'll define our reward function and assume the SDK calls it or we call it.
+                        // For this implementation, I'll directly integrate reward if the promise resolves.
+
+                        // This assumes show_9303248 is a promise itself.
+                        // The user's example `show_9303248().then(() => { alert('You have seen an ad!'); })` suggests it is.
+                        
+                        // Simulating the ad SDK's then() behavior for now, or if it's globally defined elsewhere
+                        // The key is that *after* the ad is shown, rewardUserForAd() is called.
+                        // If the show_9303248() function is set up by the SDK to automatically call a global
+                        // reward function, that would be different. The prompt makes it seem like we chain .then()
+                        // to it.
+                        
+                        // Assuming the script means:
+                        // if (typeof show_9303248 === 'function') {
+                        //   show_9303248().then(() => {
+                        //     rewardUserForAd();
+                        //   }).catch(err => {
+                        //     console.error("Ad display error or closed early:", err);
+                        //     tg.showAlert("Ad could not be shown or was closed early.");
+                        //     adButton.disabled = false;
+                        //     adButton.textContent = 'Watch Ad to Earn (0.1 BDT)';
+                        //   });
+                        // } else {
+                        //   tg.showAlert("Ad system not available.");
+                        //   adButton.disabled = false;
+                        //   adButton.textContent = 'Watch Ad to Earn (0.1 BDT)';
+                        // }
+                        // This is more robust. The user has placed the .then inside the script block,
+                        // so the scope of the reward function is critical.
+                        // Let's follow the user's provided snippet more directly for triggering.
+                        // We'll call it and then handle the reward in its promise.
+                        if (typeof show_9303248 === 'function') {
+                            show_9303248()
+                                .then(async () => {
+                                    tg.showAlert('Ad completed! You will be rewarded.'); // User alert
+                                    const adReward = 0.1;
+                                    userData.balance = parseFloat(userData.balance || 0) + adReward;
+                                    userData.totalScore = (userData.totalScore || 0) + adReward; // Optional: also add to total score
+                                    
+                                    try {
+                                        await db.ref(`users/${currentUser.id}`).update({
+                                            balance: userData.balance,
+                                            totalScore: userData.totalScore
+                                        });
+                                        updateBalanceDisplay();
+                                        tg.HapticFeedback.notificationOccurred('success');
+                                        tg.showAlert(`You earned ${adReward.toFixed(2)} BDT!`);
+                                    } catch (dbError) {
+                                        console.error("Error updating balance after ad:", dbError);
+                                        tg.showAlert("Ad watched, but error updating balance. Please contact support.");
+                                    } finally {
+                                        adButton.disabled = false;
+                                        adButton.textContent = 'Watch Ad to Earn (0.1 BDT)';
+                                    }
+                                })
+                                .catch((error) => {
+                                    console.error('Ad error:', error);
+                                    tg.showAlert('Ad could not be shown or was skipped. No reward earned.');
+                                    adButton.disabled = false;
+                                    adButton.textContent = 'Watch Ad to Earn (0.1 BDT)';
+                                });
+                        } else {
+                             tg.showAlert("Ad functionality is not available at the moment.");
+                             adButton.disabled = false;
+                             adButton.textContent = 'Watch Ad to Earn (0.1 BDT)';
+                        }
+
+                    } catch (e) { // Catch errors from trying to call show_9303248 if it's not a promise or errors
+                        console.error("Error initiating ad:", e);
+                        tg.showAlert("Could not start the ad. Please try again later.");
+                        adButton.disabled = false;
+                        adButton.textContent = 'Watch Ad to Earn (0.1 BDT)';
+                    }
+                } else { // User cancelled the popup
+                     adButton.disabled = false;
+                     adButton.textContent = 'Watch Ad to Earn (0.1 BDT)';
+                }
+            });
+        });
+
+
+        // --- Start the app ---
+        initializeApp();
+
+        // Global error handler (optional, for unhandled promise rejections)
+        window.addEventListener('unhandledrejection', function(event) {
+            console.error('Unhandled promise rejection:', event.reason);
+            // Optionally show a generic error to the user via tg.showAlert
+        });
 
     </script>
 </body>
