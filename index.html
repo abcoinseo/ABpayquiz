@@ -3,25 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>AB Quiz App</title>
+    <title>AB Quiz Pro</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src='//whephiwums.com/sdk.js' data-zone='9303248' data-sdk='show_9303248'></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
     <style>
         :root {
             --primary-pink: #FF69B4; /* Deep Pink */
             --secondary-pink: #FFB6C1; /* Light Pink */
             --accent-pink: #FF1493; /* Hot Pink for accents */
-            --text-color-dark: #4F4F4F; /* Dark grey for text on light backgrounds */
-            --text-color-light: #FFFFFF; /* White text for dark backgrounds */
-            --background-light: #FFF0F5; /* Lavender Blush - very light pink */
+            --text-color-dark: #333333;
+            --text-color-light: #FFFFFF;
+            --background-light: #FFF0F5; /* Lavender Blush */
             --border-color: #FFC0CB; /* Pink border */
-            --success-color: #32CD32; /* Lime Green */
-            --error-color: #FF6347; /* Tomato Red */
-            --disabled-color: #D3D3D3; /* Light Grey */
+            --success-color: #28a745; /* Green */
+            --warning-color: #ffc107; /* Yellow */
+            --error-color: #dc3545; /* Red */
+            --info-color: #17a2b8; /* Teal */
+            --disabled-color: #D3D3D3;
+            --gold-color: #FFD700;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             padding: 0;
             background-color: var(--background-light);
@@ -30,390 +34,481 @@
             display: flex;
             flex-direction: column;
             min-height: 100vh;
+            transition: background-color 0.3s ease;
         }
 
         .app-container {
             padding: 15px;
             flex-grow: 1;
+            padding-bottom: 80px; /* Space for fixed nav */
         }
 
         header {
-            background-color: var(--primary-pink);
+            background: linear-gradient(135deg, var(--primary-pink), var(--accent-pink));
             color: var(--text-color-light);
-            padding: 15px;
+            padding: 20px 15px;
             text-align: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 12px rgba(255, 105, 180, 0.4);
+            border-bottom-left-radius: 20px;
+            border-bottom-right-radius: 20px;
         }
 
         header h1 {
             margin: 0;
-            font-size: 1.5em;
+            font-size: 1.8em;
+            font-weight: 700;
+            letter-spacing: 1px;
         }
 
         .balance-display {
-            font-size: 1.2em;
+            font-size: 1.4em;
             font-weight: bold;
-            margin-top: 5px;
-            color: var(--text-color-light); /* White text for balance on pink header */
+            margin-top: 8px;
+            color: var(--text-color-light);
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+        }
+        .balance-display i {
+            margin-right: 5px;
         }
 
         nav {
             display: flex;
             justify-content: space-around;
-            background-color: var(--secondary-pink);
-            padding: 10px 0;
-            box-shadow: 0 -2px 4px rgba(0,0,0,0.05);
+            background-color: var(--text-color-light);
+            padding: 0;
+            box-shadow: 0 -3px 8px rgba(0,0,0,0.1);
             position: fixed;
             bottom: 0;
             width: 100%;
             z-index: 100;
+            border-top: 1px solid var(--border-color);
         }
 
         nav button {
             background-color: transparent;
             color: var(--primary-pink);
             border: none;
-            padding: 10px 15px;
-            font-size: 1em;
-            font-weight: bold;
+            padding: 12px 10px;
+            font-size: 0.9em; /* Smaller font for more items */
+            font-weight: 600;
             cursor: pointer;
-            transition: color 0.3s ease;
+            transition: all 0.3s ease;
+            flex-grow: 1; /* Distribute space equally */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+        nav button i {
+            font-size: 1.3em; /* Icon size */
         }
 
         nav button.active {
             color: var(--accent-pink);
-            border-bottom: 2px solid var(--accent-pink);
+            background-color: var(--secondary-pink);
         }
-
-        nav button:hover {
-            color: var(--accent-pink);
+        nav button:hover:not(.active) {
+            background-color: #FFEBF2; /* Lighter pink hover */
         }
 
         .page {
-            display: none; /* Hidden by default */
-            padding-bottom: 70px; /* Space for fixed nav */
-            animation: fadeIn 0.5s ease-in-out;
+            display: none;
+            animation: fadeInPage 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         }
-
         .page.active {
             display: block;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
+        @keyframes fadeInPage {
+            from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            70% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
         }
 
         .card {
             background-color: var(--text-color-light);
-            border-radius: 10px;
+            border-radius: 15px;
             padding: 20px;
             margin-bottom: 20px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
             border: 1px solid var(--border-color);
+            animation: popIn 0.5s ease-out forwards;
+            opacity: 0; /* Start hidden for animation */
         }
-        
+        .card:nth-child(1) { animation-delay: 0.1s; }
+        .card:nth-child(2) { animation-delay: 0.2s; }
+        .card:nth-child(3) { animation-delay: 0.3s; }
+
+
         .card h2 {
             color: var(--primary-pink);
             margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+            display: flex;
+            align-items: center;
+        }
+        .card h2 i {
+            margin-right: 10px;
+            font-size: 1.1em;
         }
 
-        button.primary-button {
-            background-color: var(--primary-pink);
+        button.primary-button, .styled-link-button {
+            background: linear-gradient(135deg, var(--primary-pink), var(--accent-pink));
             color: var(--text-color-light);
             border: none;
             padding: 12px 25px;
-            border-radius: 25px;
+            border-radius: 30px;
             font-size: 1em;
             font-weight: bold;
             cursor: pointer;
-            transition: background-color 0.3s ease, transform 0.2s ease;
-            display: block;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
             width: 100%;
             margin-top: 15px;
             text-align: center;
+            box-shadow: 0 4px 8px rgba(255,105,180,0.3);
+            text-decoration: none; /* For styled-link-button */
         }
-
-        button.primary-button:hover {
-            background-color: var(--accent-pink);
-            transform: translateY(-2px);
+        button.primary-button:hover, .styled-link-button:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 6px 12px rgba(255,105,180,0.4);
         }
-        button.primary-button:active {
-            transform: translateY(0px);
+        button.primary-button:active, .styled-link-button:active {
+            transform: translateY(0px) scale(0.98);
+            box-shadow: 0 2px 4px rgba(255,105,180,0.2);
         }
         button.primary-button:disabled {
-            background-color: var(--disabled-color);
+            background: var(--disabled-color);
+            box-shadow: none;
             cursor: not-allowed;
+            transform: none;
         }
-
-        .quiz-option {
-            display: block;
-            width: calc(100% - 20px);
-            padding: 10px;
-            margin: 10px 0;
+        button.secondary-button {
             background-color: var(--secondary-pink);
-            color: var(--text-color-dark);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
+            color: var(--primary-pink);
+            border: 1px solid var(--primary-pink);
         }
-
-        .quiz-option:hover {
+         button.secondary-button:hover {
             background-color: var(--primary-pink);
             color: var(--text-color-light);
         }
-        
+
+
+        .quiz-option {
+            display: block;
+            width: calc(100% - 22px); /* Adjust for padding */
+            padding: 12px;
+            margin: 8px 0;
+            background-color: var(--text-color-light);
+            color: var(--text-color-dark);
+            border: 2px solid var(--secondary-pink);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1em;
+            text-align: left;
+        }
+        .quiz-option:hover {
+            border-color: var(--primary-pink);
+            background-color: #FFF5F8;
+        }
         .quiz-option.selected {
-            background-color: var(--accent-pink);
+            background-color: var(--primary-pink);
             color: var(--text-color-light);
+            border-color: var(--accent-pink);
             font-weight: bold;
         }
+        #quiz-question {
+            font-weight:bold;
+            font-size: 1.2em;
+            margin-bottom: 15px;
+            color: var(--text-color-dark);
+        }
+        #quiz-coins-info { color: var(--accent-pink); font-weight: bold;}
 
+        /* Leaderboard Styles */
+        #leaderboard-list { list-style-type: none; padding: 0; }
         #leaderboard-list li {
-            background-color: var(--secondary-pink);
-            padding: 10px;
-            margin-bottom: 8px;
-            border-radius: 5px;
+            background-color: var(--text-color-light);
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            border-radius: 10px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             color: var(--text-color-dark);
+            border: 1px solid var(--border-color);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
-        #leaderboard-list li:nth-child(odd) {
-            background-color: #FFE4E1; /* Misty Rose */
+        #leaderboard-list li:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
         }
-        #leaderboard-list .rank {
+        #leaderboard-list li .rank {
             font-weight: bold;
             color: var(--primary-pink);
-            margin-right: 10px;
+            margin-right: 15px;
+            font-size: 1.1em;
+            min-width: 30px; /* For alignment */
+            text-align: center;
         }
-
-        .profile-info p {
-            margin: 8px 0;
+        #leaderboard-list li .user-info {
+            flex-grow: 1;
+        }
+        #leaderboard-list li .user-name {
+            font-weight: 500;
+        }
+        #leaderboard-list li .user-score {
+            font-weight: bold;
+            color: var(--accent-pink);
             font-size: 1.1em;
         }
-        .profile-info strong {
-            color: var(--primary-pink);
+        #leaderboard-list li.current-user-entry {
+            background-color: var(--secondary-pink);
+            border-left: 5px solid var(--accent-pink);
         }
+        .king-icon {
+            color: var(--gold-color);
+            margin-left: 5px;
+        }
+
+        .profile-info p { margin: 10px 0; font-size: 1.1em; display: flex; align-items: center; }
+        .profile-info p i { color: var(--primary-pink); margin-right: 10px; width: 20px; text-align: center; }
+        .profile-info strong { color: var(--text-color-dark); font-weight: 500; }
 
         /* Modal Styles */
         .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0,0,0,0.5);
-            animation: fadeInModal 0.3s ease;
+            display: none; position: fixed; z-index: 1000;
+            left: 0; top: 0; width: 100%; height: 100%;
+            overflow: auto; background-color: rgba(0,0,0,0.6);
+            animation: fadeInModal 0.4s ease;
         }
-
         .modal-content {
             background-color: var(--background-light);
-            margin: 15% auto;
-            padding: 25px;
+            margin: 10% auto; padding: 25px;
             border: 1px solid var(--border-color);
-            border-radius: 10px;
-            width: 85%;
-            max-width: 400px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            border-radius: 15px; width: 90%; max-width: 450px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
             position: relative;
+            animation: slideInModal 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         }
+        @keyframes fadeInModal { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideInModal { from { transform: translateY(-50px); opacity: 0; } to { transform: translateY(0px); opacity: 1; } }
         
-        .modal-content h3 {
-            color: var(--primary-pink);
-            margin-top: 0;
-        }
+        .modal-content h3 { color: var(--primary-pink); margin-top: 0; font-size: 1.5em; display: flex; align-items: center;}
+        .modal-content h3 i { margin-right: 10px;}
 
         .close-button {
-            color: var(--primary-pink);
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-            position: absolute;
-            top: 10px;
-            right: 15px;
+            color: var(--primary-pink); float: right;
+            font-size: 32px; font-weight: bold;
+            position: absolute; top: 10px; right: 20px;
+            transition: color 0.2s ease;
         }
-
-        .close-button:hover,
-        .close-button:focus {
-            color: var(--accent-pink);
-            text-decoration: none;
-            cursor: pointer;
-        }
-
-        @keyframes fadeInModal {
-            from { opacity: 0; transform: scale(0.9); }
-            to { opacity: 1; transform: scale(1); }
-        }
+        .close-button:hover, .close-button:focus { color: var(--accent-pink); text-decoration: none; cursor: pointer; }
         
         input[type="number"], input[type="text"] {
-            width: calc(100% - 22px);
-            padding: 10px;
-            margin: 10px 0;
-            border: 1px solid var(--border-color);
-            border-radius: 5px;
-            background-color: var(--text-color-light);
-            color: var(--text-color-dark);
+            width: calc(100% - 24px); padding: 12px;
+            margin: 10px 0; border: 1px solid var(--border-color);
+            border-radius: 8px; background-color: var(--text-color-light);
+            color: var(--text-color-dark); font-size: 1em;
+            transition: border-color 0.3s ease;
+        }
+        input[type="number"]:focus, input[type="text"]:focus {
+            border-color: var(--primary-pink);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(255,105,180,0.2);
         }
 
-        #hold-to-withdraw-button {
-            position: relative;
-            overflow: hidden;
-        }
+        #hold-to-withdraw-button { position: relative; overflow: hidden; }
         #hold-progress {
-            position: absolute;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            background-color: rgba(255, 255, 255, 0.3);
-            width: 0%;
-            transition: width 0.1s linear;
+            position: absolute; left: 0; top: 0; bottom: 0;
+            background-color: rgba(255, 255, 255, 0.4);
+            width: 0%; transition: width 0.1s linear;
         }
+
         .toast {
             position: fixed;
-            bottom: 80px; /* Above nav */
-            left: 50%;
+            bottom: 80px; left: 50%;
             transform: translateX(-50%);
             background-color: var(--primary-pink);
-            color: white;
-            padding: 12px 20px;
-            border-radius: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            z-index: 1001;
-            opacity: 0;
-            transition: opacity 0.5s ease, bottom 0.5s ease;
+            color: white; padding: 12px 25px;
+            border-radius: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            z-index: 1001; opacity: 0;
+            transition: opacity 0.5s ease, bottom 0.5s ease, transform 0.5s ease;
+            font-size: 0.95em;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .toast.show { opacity: 1; bottom: 90px; transform: translateX(-50%) translateY(0); }
+        .toast.error { background-color: var(--error-color); }
+        .toast.success { background-color: var(--success-color); }
+
+        .loader {
+            border: 6px solid var(--secondary-pink);
+            border-top: 6px solid var(--primary-pink);
+            border-radius: 50%;
+            width: 50px; height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 30px auto;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .text-center { text-align: center; }
+        .pink-link { color: var(--primary-pink); text-decoration: none; font-weight: bold; }
+        .pink-link:hover { color: var(--accent-pink); text-decoration: underline; }
+
+        /* Withdrawal History */
+        #withdrawal-history-list { list-style-type: none; padding: 0; max-height: 300px; overflow-y: auto; }
+        #withdrawal-history-list li {
+            background-color: #FFF5F8; /* Very light pink */
+            padding: 10px 15px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             font-size: 0.9em;
         }
-        .toast.show {
-            opacity: 1;
-            bottom: 90px;
-        }
-        .loader {
-            border: 5px solid var(--secondary-pink);
-            border-top: 5px solid var(--primary-pink);
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .text-center {
-            text-align: center;
-        }
-        .pink-link {
-            color: var(--primary-pink);
-            text-decoration: none;
+        #withdrawal-history-list .status {
             font-weight: bold;
+            padding: 3px 8px;
+            border-radius: 5px;
+            font-size: 0.85em;
         }
-        .pink-link:hover {
-            color: var(--accent-pink);
-            text-decoration: underline;
+        #withdrawal-history-list .status-pending { color: var(--warning-color); background-color: #fff8e1; border: 1px solid var(--warning-color);}
+        #withdrawal-history-list .status-completed { color: var(--success-color); background-color: #e8f5e9; border: 1px solid var(--success-color);}
+        #withdrawal-history-list .status-rejected { color: var(--error-color); background-color: #ffebee; border: 1px solid var(--error-color);}
+
+        .ad-info {
+            font-size: 0.9em;
+            color: var(--text-color-dark);
+            margin-top: 5px;
+            text-align: center;
         }
     </style>
 </head>
 <body>
     <header>
-        <h1>AB Quiz</h1>
-        <div class="balance-display">Balance: <span id="user-balance">0</span> ৳</div>
+        <h1><i class="fas fa-brain"></i> AB Quiz Pro</h1>
+        <div class="balance-display"><i class="fas fa-coins"></i> Balance: <span id="user-balance">0.00</span> ৳</div>
     </header>
 
     <div class="app-container">
         <!-- Home Page -->
         <div id="home-page" class="page active">
             <div class="card">
-                <h2>Daily Quiz Challenge</h2>
+                <h2><i class="fas fa-question-circle"></i> Daily Quiz Challenge</h2>
                 <div id="quiz-area">
-                    <p id="quiz-loading">Loading quiz...</p>
+                    <div id="quiz-loading" class="loader"></div>
                     <div id="quiz-content" style="display:none;">
-                        <p id="quiz-question" style="font-weight:bold; font-size: 1.1em;"></p>
+                        <p id="quiz-question"></p>
                         <div id="quiz-options"></div>
-                        <p>Coins for this quiz: <span id="quiz-coins"></span> ৳</p>
-                        <button id="submit-answer-button" class="primary-button">Submit Answer</button>
+                        <p id="quiz-coins-info">Coins for this quiz: <span id="quiz-coins"></span> ৳</p>
+                        <button id="submit-answer-button" class="primary-button"><i class="fas fa-check"></i> Submit Answer</button>
                     </div>
-                    <p id="quiz-limit-message" style="display:none; color: var(--accent-pink); font-weight: bold;"></p>
+                    <p id="quiz-limit-message" style="display:none; color: var(--accent-pink); font-weight: bold; text-align:center;"></p>
+                    <p id="all-quizzes-completed-message" style="display:none; color: var(--info-color); font-weight: bold; text-align:center;"></p>
                 </div>
             </div>
              <div class="card">
-                <h2>Earn Extra BDT</h2>
-                <p>Watch an ad to earn 0.1 ৳</p>
-                <button id="watch-ad-button" class="primary-button" style="background-color: var(--success-color);">Watch Ad & Earn</button>
+                <h2><i class="fas fa-dollar-sign"></i> Earn Extra BDT</h2>
+                <p>Watch an ad to earn 0.10 ৳.</p>
+                <p class="ad-info">Ads remaining today: <span id="ads-remaining-today">20</span>/20</p>
+                <p class="ad-info" id="ad-cooldown-message" style="display:none; color:var(--warning-color)"></p>
+                <button id="watch-ad-button" class="primary-button" style="background: linear-gradient(135deg, var(--success-color), #20c997);"><i class="fas fa-video"></i> Watch Ad & Earn</button>
             </div>
         </div>
 
         <!-- Leaderboard Page -->
         <div id="leaderboard-page" class="page">
             <div class="card">
-                <h2>Leaderboard</h2>
+                <h2><i class="fas fa-trophy"></i> Leaderboard</h2>
                 <div id="leaderboard-loading" class="loader"></div>
-                <ul id="leaderboard-list" style="list-style-type: none; padding: 0;">
-                    <!-- Leaderboard items will be populated here -->
-                </ul>
+                <ul id="leaderboard-list"></ul>
             </div>
         </div>
 
         <!-- Profile Page -->
         <div id="profile-page" class="page">
             <div class="card">
-                <h2>My Profile</h2>
+                <h2><i class="fas fa-user-circle"></i> My Profile</h2>
                 <div class="profile-info">
-                    <p><strong>Name:</strong> <span id="profile-name">-</span></p>
-                    <p><strong>User ID:</strong> <span id="profile-id">-</span></p>
-                    <p><strong>Current Balance:</strong> <span id="profile-balance">0</span> ৳</p>
-                    <p><strong>Quizzes Today:</strong> <span id="profile-quizzes-today">0</span>/10</p>
+                    <p><i class="fas fa-user"></i><strong>Name:</strong> <span id="profile-name">-</span></p>
+                    <p><i class="fas fa-id-card"></i><strong>User ID:</strong> <span id="profile-id">-</span></p>
+                    <p><i class="fas fa-wallet"></i><strong>Current Balance:</strong> <span id="profile-balance">0.00</span> ৳</p>
+                    <p><i class="fas fa-tasks"></i><strong>Quizzes Today:</strong> <span id="profile-quizzes-today">0</span>/10</p>
+                    <p><i class="fas fa-ad"></i><strong>Ads Watched Today:</strong> <span id="profile-ads-today">0</span>/20</p>
                 </div>
-                <button id="withdraw-button" class="primary-button">Withdraw Balance</button>
+                <button id="withdraw-button" class="primary-button"><i class="fas fa-hand-holding-usd"></i> Withdraw Balance</button>
             </div>
             <div class="card">
-                <h2>Wallet & Community</h2>
-                <p>Manage your withdrawals: <a href="https://t.me/ABpaybdbot" target="_blank" class="pink-link" id="wallet-link">ABPayBD Bot Wallet</a></p>
-                <p>
-                    <a href="https://t.me/Abpaybd" target="_blank" class="primary-button" style="text-decoration: none;">Join Our Community</a>
-                </p>
+                <h2><i class="fas fa-history"></i> Withdrawal History</h2>
+                <div id="withdrawal-history-loading" class="loader" style="display:none;"></div>
+                <ul id="withdrawal-history-list">
+                    <!-- History items will be populated here -->
+                </ul>
+                <p id="no-withdrawal-history" style="text-align:center; display:none;">No withdrawal history found.</p>
+            </div>
+            <div class="card">
+                <h2><i class="fas fa-link"></i> Quick Links</h2>
+                <a href="https://t.me/ABpaybdbot" target="_blank" class="styled-link-button secondary-button" id="wallet-link"><i class="fab fa-telegram-plane"></i> ABPayBD Bot Wallet</a>
+                <a href="https://t.me/Abpaybd" target="_blank" class="styled-link-button"><i class="fas fa-users"></i> Join Our Community</a>
             </div>
         </div>
     </div>
 
     <nav>
-        <button id="nav-home" class="active" onclick="showPage('home-page')">Home</button>
-        <button id="nav-leaderboard" onclick="showPage('leaderboard-page')">Leaderboard</button>
-        <button id="nav-profile" onclick="showPage('profile-page')">Profile</button>
+        <button id="nav-home" class="active" onclick="showPage('home-page')"><i class="fas fa-home"></i><span>Home</span></button>
+        <button id="nav-leaderboard" onclick="showPage('leaderboard-page')"><i class="fas fa-medal"></i><span>Leaders</span></button>
+        <button id="nav-profile" onclick="showPage('profile-page')"><i class="fas fa-user"></i><span>Profile</span></button>
     </nav>
 
     <!-- Withdrawal Modal -->
     <div id="withdraw-modal" class="modal">
         <div class="modal-content">
             <span class="close-button" onclick="closeModal('withdraw-modal')">×</span>
-            <h3>Withdraw Funds</h3>
-            <p>Your current balance: <span id="modal-current-balance">0</span> ৳</p>
+            <h3><i class="fas fa-money-check-alt"></i> Withdraw Funds</h3>
+            <p>Your current balance: <span id="modal-current-balance">0.00</span> ৳</p>
             <label for="withdraw-amount">Amount to withdraw (BDT):</label>
-            <input type="number" id="withdraw-amount" placeholder="Enter amount">
-            <button onclick="document.getElementById('withdraw-amount').value = currentUser.balance.toFixed(2)" class="primary-button" style="background-color: var(--secondary-pink); color: var(--primary-pink); margin-bottom: 10px;">Use Max Amount</button>
-            <p style="font-size:0.8em; color: var(--text-color-dark);">Min withdrawal: 10 ৳. Max: 5000 ৳.</p>
+            <input type="number" id="withdraw-amount" placeholder="Enter amount (e.g., 50.00)">
+            <button onclick="document.getElementById('withdraw-amount').value = parseFloat(currentUser.balance.toFixed(2))" class="primary-button secondary-button" style="margin-bottom: 10px;"><i class="fas fa-piggy-bank"></i> Use Max Amount</button>
+            <p style="font-size:0.85em; color: var(--text-color-dark);">Min withdrawal: <span id="min-withdraw-val">10</span> ৳. Max: <span id="max-withdraw-val">5000</span> ৳.</p>
             <button id="hold-to-withdraw-button" class="primary-button">
-                <span id="hold-text">Press & Hold to Confirm (2s)</span>
                 <div id="hold-progress"></div>
+                <span id="hold-text"><i class="fas fa-hand-paper"></i> Press & Hold to Confirm (2s)</span>
             </button>
-            <p id="withdraw-message" style="margin-top:10px; text-align:center;"></p>
+            <p id="withdraw-message" style="margin-top:15px; text-align:center; font-weight:bold;"></p>
         </div>
     </div>
 
     <!-- Toast Notification -->
-    <div id="toast-notification" class="toast"></div>
+    <div id="toast-notification" class="toast">
+        <i id="toast-icon" class="fas fa-info-circle"></i>
+        <span id="toast-message"></span>
+    </div>
+
+    <!-- Audio Elements -->
+    <audio id="audio-correct" src="1.mp3" preload="auto"></audio>
+    <audio id="audio-error"   src="2.mp3" preload="auto"></audio>
+    <audio id="audio-click"   src="3.mp3" preload="auto"></audio>
+    <audio id="audio-coin"    src="4.mp3" preload="auto"></audio>
+
 
     <!-- Firebase SDKs -->
     <script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <script>
-        // Firebase Config
+        // Firebase Config (Same as before)
         const firebaseConfig = {
             apiKey: "AIzaSyB-orRfGPS3vUlPAYkh-BYRE-3AbcyO1LQ",
             authDomain: "ab-quiz-f3f31.firebaseapp.com",
@@ -430,16 +525,19 @@
         let selectedOption = null;
         let db = null;
         const DAILY_QUIZ_LIMIT = 10;
+        const DAILY_AD_LIMIT = 20;
+        const AD_COOLDOWN_SECONDS = 10;
         const MIN_WITHDRAWAL = 10;
         const MAX_WITHDRAWAL = 5000;
 
-        // Hold to withdraw variables
         let holdTimeout;
         let holdStartTime;
-        const HOLD_DURATION = 2000; // 2 seconds
+        const HOLD_DURATION = 2000;
+        let adCooldownInterval;
 
         // DOM Elements
         const userBalanceDisplay = document.getElementById('user-balance');
+        // ... (other elements from previous code, add new ones)
         const quizArea = document.getElementById('quiz-area');
         const quizLoading = document.getElementById('quiz-loading');
         const quizContent = document.getElementById('quiz-content');
@@ -448,7 +546,8 @@
         const quizCoinsElem = document.getElementById('quiz-coins');
         const submitAnswerButton = document.getElementById('submit-answer-button');
         const quizLimitMessage = document.getElementById('quiz-limit-message');
-        
+        const allQuizzesCompletedMessage = document.getElementById('all-quizzes-completed-message');
+
         const leaderboardList = document.getElementById('leaderboard-list');
         const leaderboardLoading = document.getElementById('leaderboard-loading');
 
@@ -456,22 +555,69 @@
         const profileId = document.getElementById('profile-id');
         const profileBalance = document.getElementById('profile-balance');
         const profileQuizzesToday = document.getElementById('profile-quizzes-today');
+        const profileAdsToday = document.getElementById('profile-ads-today');
 
         const withdrawModal = document.getElementById('withdraw-modal');
         const modalCurrentBalance = document.getElementById('modal-current-balance');
         const withdrawAmountInput = document.getElementById('withdraw-amount');
         const holdToWithdrawButton = document.getElementById('hold-to-withdraw-button');
         const holdProgress = document.getElementById('hold-progress');
-        const holdText = document.getElementById('hold-text');
+        const holdText = document.getElementById('hold-text'); // Span inside button
         const withdrawMessage = document.getElementById('withdraw-message');
         
         const watchAdButton = document.getElementById('watch-ad-button');
+        const adsRemainingTodayDisplay = document.getElementById('ads-remaining-today');
+        const adCooldownMessage = document.getElementById('ad-cooldown-message');
+
+        const withdrawalHistoryList = document.getElementById('withdrawal-history-list');
+        const withdrawalHistoryLoading = document.getElementById('withdrawal-history-loading');
+        const noWithdrawalHistoryMessage = document.getElementById('no-withdrawal-history');
+        
+        document.getElementById('min-withdraw-val').textContent = MIN_WITHDRAWAL;
+        document.getElementById('max-withdraw-val').textContent = MAX_WITHDRAWAL;
+
+        // Audio elements
+        const audioCorrect = document.getElementById('audio-correct');
+        const audioError = document.getElementById('audio-error');
+        const audioClick = document.getElementById('audio-click');
+        const audioCoin = document.getElementById('audio-coin');
+
+        function playSound(sound) {
+            try {
+                switch(sound) {
+                    case 'correct': audioCorrect.play(); break;
+                    case 'error': audioError.play(); break;
+                    case 'click': audioClick.play(); break;
+                    case 'coin': audioCoin.play(); break;
+                }
+            } catch (e) {
+                console.warn("Sound play error:", e);
+            }
+        }
 
         // Toast Notification
-        function showToast(message, duration = 3000) {
+        function showToast(message, type = 'info', duration = 3000) {
             const toast = document.getElementById('toast-notification');
-            toast.textContent = message;
-            toast.classList.add('show');
+            const toastIcon = document.getElementById('toast-icon');
+            const toastMessage = document.getElementById('toast-message');
+            
+            toastMessage.textContent = message;
+            toast.className = 'toast show'; // Reset classes
+            toastIcon.className = 'fas'; // Reset icon classes
+
+            if (type === 'success') {
+                toast.classList.add('success');
+                toastIcon.classList.add('fa-check-circle');
+            } else if (type === 'error') {
+                toast.classList.add('error');
+                toastIcon.classList.add('fa-times-circle');
+            } else if (type === 'warning') {
+                toast.classList.add('warning'); // Assuming you have a .warning style
+                toastIcon.classList.add('fa-exclamation-triangle');
+            } else { // info
+                toastIcon.classList.add('fa-info-circle');
+            }
+            
             setTimeout(() => {
                 toast.classList.remove('show');
             }, duration);
@@ -479,126 +625,149 @@
 
         // Page Navigation
         function showPage(pageId) {
+            playSound('click');
             document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
             document.getElementById(pageId).classList.add('active');
             document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active'));
-            if (pageId === 'home-page') document.getElementById('nav-home').classList.add('active');
-            if (pageId === 'leaderboard-page') {
-                 document.getElementById('nav-leaderboard').classList.add('active');
-                 loadLeaderboard();
-            }
+            
+            const navButtonId = `nav-${pageId.replace('-page', '')}`;
+            document.getElementById(navButtonId).classList.add('active');
+
+            if (pageId === 'leaderboard-page') loadLeaderboard(); // Refreshes on view
             if (pageId === 'profile-page') {
-                document.getElementById('nav-profile').classList.add('active');
-                updateProfilePage();
+                updateProfilePageUI(); // Update UI elements directly
+                loadWithdrawalHistory();
             }
         }
 
         // Modal Control
         function openModal(modalId) {
+            playSound('click');
             if (modalId === 'withdraw-modal') {
                 modalCurrentBalance.textContent = currentUser.balance.toFixed(2);
                 withdrawAmountInput.value = '';
                 withdrawMessage.textContent = '';
                 holdProgress.style.width = '0%';
-                holdText.textContent = 'Press & Hold to Confirm (2s)';
+                holdText.innerHTML = '<i class="fas fa-hand-paper"></i> Press & Hold to Confirm (2s)';
                 holdToWithdrawButton.disabled = false;
             }
             document.getElementById(modalId).style.display = 'block';
         }
 
         function closeModal(modalId) {
+            playSound('click');
             document.getElementById(modalId).style.display = 'none';
-            if (holdTimeout) clearTimeout(holdTimeout); // Clear hold timer if modal is closed
-            holdProgress.style.width = '0%';
+            if (holdTimeout) clearTimeout(holdTimeout);
+            resetHoldButton();
         }
 
-        // Firebase Helper Functions
-        async function readData(path) {
-            try {
-                const snapshot = await db.ref(path).once('value');
-                return snapshot.val();
-            } catch (error) {
-                console.error("Firebase read error:", error);
-                showToast("Error reading data.", 3000);
-                return null;
-            }
-        }
+        // Firebase Helper Functions (same as before, but good to keep)
+        async function readData(path) { /* ... */ try {const snapshot = await db.ref(path).once('value'); return snapshot.val();} catch(e){console.error(e); return null;} }
+        async function writeData(path, data) { /* ... */ try {await db.ref(path).set(data);} catch(e){console.error(e);} }
+        async function updateData(path, data) { /* ... */ try {await db.ref(path).update(data);} catch(e){console.error(e);} }
+        async function pushData(path, data) { /* ... */ try {const newRef = db.ref(path).push(); await newRef.set(data); return newRef.key;} catch(e){console.error(e); return null;} }
 
-        async function writeData(path, data) {
-            try {
-                await db.ref(path).set(data);
-            } catch (error) {
-                console.error("Firebase write error:", error);
-                showToast("Error writing data.", 3000);
+
+        function checkAndResetDailyCounters() {
+            const today = new Date().toISOString().split('T')[0];
+            let updates = {};
+            let needsUpdate = false;
+
+            if (currentUser.lastQuizDate !== today) {
+                updates.quizzesTakenToday = 0;
+                updates.lastQuizDate = today;
+                // Optionally clear completedQuizzes if they should reset daily
+                // updates.completedQuizzes = {}; // Uncomment if quizzes reset daily
+                needsUpdate = true;
             }
-        }
-        async function updateData(path, data) {
-            try {
-                await db.ref(path).update(data);
-            } catch (error) {
-                console.error("Firebase update error:", error);
-                showToast("Error updating data.", 3000);
+            if (currentUser.lastAdDate !== today) {
+                updates.adsWatchedToday = 0;
+                updates.lastAdDate = today;
+                needsUpdate = true;
             }
-        }
-        async function pushData(path, data) {
-             try {
-                const newRef = db.ref(path).push();
-                await newRef.set(data);
-                return newRef.key;
-            } catch (error) {
-                console.error("Firebase push error:", error);
-                showToast("Error saving data.", 3000);
-                return null;
+
+            if (needsUpdate) {
+                // Update local currentUser first for responsiveness
+                Object.assign(currentUser, updates);
+                // Then update Firebase
+                updateData(`users/${currentUser.id}`, updates);
             }
         }
 
-        // User Initialization
+
+        // User Initialization and Real-time Updates
         async function initializeUser() {
             tgUser = Telegram.WebApp.initDataUnsafe.user;
             if (!tgUser || !tgUser.id) {
-                quizArea.innerHTML = "<p>Could not verify Telegram user. Please try again.</p>";
-                console.error("Telegram user data not available.");
+                showToast("Telegram user verification failed!", "error", 5000);
                 Telegram.WebApp.close();
                 return;
             }
 
-            const userId = String(tgUser.id); // Ensure ID is string for Firebase path
-            currentUser = await readData(`users/${userId}`);
+            const userId = String(tgUser.id);
+            const userPath = `users/${userId}`;
 
-            const today = new Date().toISOString().split('T')[0];
+            // Listen for real-time updates to user data
+            db.ref(userPath).on('value', (snapshot) => {
+                const userData = snapshot.val();
+                const today = new Date().toISOString().split('T')[0];
 
-            if (!currentUser) {
-                currentUser = {
-                    id: userId,
-                    username: tgUser.username || 'N/A',
-                    firstName: tgUser.first_name || 'User',
-                    balance: 0,
-                    lastQuizDate: today,
-                    quizzesTakenToday: 0,
-                    totalScore: 0 // Could be sum of coins earned or separate score
-                };
-                await writeData(`users/${userId}`, currentUser);
-                showToast(`Welcome, ${currentUser.firstName}!`, 3000);
-            } else {
-                if (currentUser.lastQuizDate !== today) {
-                    currentUser.quizzesTakenToday = 0;
-                    currentUser.lastQuizDate = today;
-                    await updateData(`users/${userId}`, { 
-                        quizzesTakenToday: 0, 
-                        lastQuizDate: today 
-                    });
+                if (!userData) {
+                    currentUser = {
+                        id: userId,
+                        username: tgUser.username || `user${userId.slice(-4)}`,
+                        firstName: tgUser.first_name || 'Quizzer',
+                        balance: 0.0,
+                        totalScore: 0,
+                        lastQuizDate: today,
+                        quizzesTakenToday: 0,
+                        completedQuizzes: {}, // Store completed quiz IDs here
+                        lastAdDate: today,
+                        adsWatchedToday: 0,
+                        lastAdWatchedTimestamp: 0
+                    };
+                    writeData(userPath, currentUser); // Write initial data
+                    showToast(`Welcome, ${currentUser.firstName}!`, 'success');
+                } else {
+                    currentUser = userData;
+                    if (!currentUser.completedQuizzes) currentUser.completedQuizzes = {};
+                    if (typeof currentUser.balance !== 'number') currentUser.balance = 0;
+                     if (typeof currentUser.adsWatchedToday !== 'number') currentUser.adsWatchedToday = 0;
+                    if (typeof currentUser.lastAdWatchedTimestamp !== 'number') currentUser.lastAdWatchedTimestamp = 0;
+
                 }
-            }
-            updateBalanceDisplay();
-            loadQuiz();
+                
+                checkAndResetDailyCounters(); // Check and reset daily counters
+                updateUIAfterUserLoad();
+
+            }, (error) => {
+                console.error("Firebase user data listener error:", error);
+                showToast("Error fetching user data.", "error");
+            });
         }
+        
+        function updateUIAfterUserLoad() {
+            if (!currentUser) return;
+            updateBalanceDisplay();
+            updateProfilePageUI();
+            updateAdButtonStatus();
+            loadQuiz(); // Now safe to load quiz
+             if (document.getElementById('leaderboard-page').classList.contains('active')) {
+                loadLeaderboard();
+            }
+            if (document.getElementById('profile-page').classList.contains('active')) {
+                loadWithdrawalHistory();
+            }
+        }
+
 
         function updateBalanceDisplay() {
             if (currentUser) {
-                const balanceText = currentUser.balance.toFixed(2);
-                userBalanceDisplay.textContent = balanceText;
-                if(document.getElementById('profile-balance')) { // Check if profile page elements exist
-                    profileBalance.textContent = balanceText;
+                const formattedBalance = currentUser.balance.toFixed(2);
+                userBalanceDisplay.textContent = formattedBalance;
+                profileBalance.textContent = formattedBalance; // Also update on profile page
+                if (document.getElementById('modal-current-balance').offsetParent !== null) { // Check if modal is visible
+                     modalCurrentBalance.textContent = formattedBalance;
                 }
             }
         }
@@ -608,51 +777,48 @@
             quizLoading.style.display = 'block';
             quizContent.style.display = 'none';
             quizLimitMessage.style.display = 'none';
+            allQuizzesCompletedMessage.style.display = 'none';
             submitAnswerButton.disabled = true;
 
-            if (!currentUser) { // Wait for user to initialize
-                setTimeout(loadQuiz, 500); 
-                return;
-            }
-            
+            if (!currentUser) return; // Wait for user data
+
             if (currentUser.quizzesTakenToday >= DAILY_QUIZ_LIMIT) {
                 quizLoading.style.display = 'none';
                 quizLimitMessage.textContent = "You've completed all quizzes for today! Come back tomorrow.";
                 quizLimitMessage.style.display = 'block';
-                quizContent.style.display = 'none'; // Hide quiz content if limit reached
                 return;
             }
 
-            const quizzes = await readData('quizzes');
-            if (!quizzes) {
+            const allQuizzes = await readData('quizzes');
+            if (!allQuizzes) {
                 quizLoading.style.display = 'none';
-                quizArea.innerHTML = "<p>No quizzes available at the moment. Please check back later.</p>";
+                quizArea.innerHTML = "<p>No quizzes available. Please check back later.</p>";
                 return;
             }
 
-            const quizIds = Object.keys(quizzes);
-            // Simple logic: pick a random quiz. For more complex logic, track completed quizzes.
-            // For now, let's pick one that user hasn't done today (not implemented yet, so random)
-            const randomQuizId = quizIds[Math.floor(Math.random() * quizIds.length)];
-            currentQuiz = quizzes[randomQuizId];
-            currentQuiz.id = randomQuizId; // Store ID for reference
-
-            if (!currentQuiz) {
-                 quizLoading.style.display = 'none';
-                 quizArea.innerHTML = "<p>Failed to load a quiz. Try refreshing.</p>";
-                 return;
+            const availableQuizzes = Object.entries(allQuizzes)
+                .filter(([quizId, quizData]) => !(currentUser.completedQuizzes && currentUser.completedQuizzes[quizId]));
+            
+            if (availableQuizzes.length === 0) {
+                quizLoading.style.display = 'none';
+                allQuizzesCompletedMessage.textContent = "Wow! You've completed all available quizzes. More coming soon!";
+                allQuizzesCompletedMessage.style.display = 'block';
+                return;
             }
+
+            const [randomQuizId, quizData] = availableQuizzes[Math.floor(Math.random() * availableQuizzes.length)];
+            currentQuiz = { ...quizData, id: randomQuizId };
 
             quizQuestionElem.textContent = currentQuiz.question;
             quizCoinsElem.textContent = currentQuiz.coins;
             quizOptionsElem.innerHTML = '';
             selectedOption = null;
 
-            currentQuiz.options.forEach((option, index) => {
+            currentQuiz.options.forEach((option) => {
                 const button = document.createElement('button');
                 button.classList.add('quiz-option');
                 button.textContent = option;
-                button.onclick = () => selectOption(button, option);
+                button.onclick = () => { playSound('click'); selectOption(button, option); };
                 quizOptionsElem.appendChild(button);
             });
             
@@ -669,82 +835,142 @@
 
         submitAnswerButton.onclick = async () => {
             if (!selectedOption) {
-                showToast("Please select an answer.", 2000);
+                showToast("Please select an answer.", "warning");
                 return;
             }
-
+            playSound('click');
             submitAnswerButton.disabled = true;
             let earnedCoins = 0;
+            
+            const updates = {};
+
             if (selectedOption === currentQuiz.answer) {
+                playSound('coin');
                 earnedCoins = currentQuiz.coins;
-                currentUser.balance += earnedCoins;
-                currentUser.totalScore += earnedCoins; // Assuming score is sum of coins
-                showToast(`Correct! You earned ${earnedCoins} ৳.`, 3000);
+                updates.balance = (currentUser.balance || 0) + earnedCoins;
+                updates.totalScore = (currentUser.totalScore || 0) + earnedCoins;
+                showToast(`Correct! You earned ${earnedCoins} ৳.`, "success");
             } else {
-                showToast(`Incorrect. The correct answer was: ${currentQuiz.answer}`, 3000);
+                playSound('error');
+                showToast(`Incorrect. The correct answer was: ${currentQuiz.answer}`, "error");
             }
 
-            currentUser.quizzesTakenToday += 1;
-            await updateData(`users/${currentUser.id}`, {
-                balance: currentUser.balance,
-                totalScore: currentUser.totalScore,
-                quizzesTakenToday: currentUser.quizzesTakenToday,
-                lastQuizDate: currentUser.lastQuizDate // ensure it's today
-            });
+            updates.quizzesTakenToday = (currentUser.quizzesTakenToday || 0) + 1;
+            updates[`completedQuizzes/${currentQuiz.id}`] = true; // Mark quiz as completed
 
-            updateBalanceDisplay();
-            updateProfilePage(); // Update quizzes today on profile if visible
-            loadQuiz(); // Load next quiz or show limit message
+            await updateData(`users/${currentUser.id}`, updates);
+            // currentUser will be updated by the 'onvalue' listener automatically
+            // loadQuiz(); // This will be called when currentUser updates via listener which triggers updateUIAfterUserLoad
         };
         
-        // Leaderboard Logic
-        async function loadLeaderboard() {
+        // Leaderboard Logic (Real-time)
+        function loadLeaderboard() {
             leaderboardLoading.style.display = 'block';
             leaderboardList.innerHTML = '';
-            const usersData = await readData('users');
-            if (usersData) {
-                const usersArray = Object.values(usersData);
-                // Sort by balance (descending), then by name (ascending) for ties
-                usersArray.sort((a, b) => {
-                    if (b.balance === a.balance) {
-                        return (a.firstName || '').localeCompare(b.firstName || '');
-                    }
-                    return b.balance - a.balance;
-                });
 
-                usersArray.slice(0, 50).forEach((user, index) => { // Show top 50
-                    const li = document.createElement('li');
-                    li.innerHTML = `
-                        <div><span class="rank">#${index + 1}</span> ${user.firstName} (${user.username || 'anonymous'})</div>
-                        <span style="font-weight: bold; color: var(--accent-pink);">${user.balance.toFixed(2)} ৳</span>
-                    `;
-                    leaderboardList.appendChild(li);
-                });
-            } else {
-                leaderboardList.innerHTML = '<li>No data available for leaderboard.</li>';
-            }
-            leaderboardLoading.style.display = 'none';
+            db.ref('users').orderByChild('balance').limitToLast(50).on('value', (snapshot) => {
+                leaderboardList.innerHTML = ''; // Clear previous list
+                if (snapshot.exists()) {
+                    const usersArray = [];
+                    snapshot.forEach(childSnapshot => {
+                        usersArray.push({ id: childSnapshot.key, ...childSnapshot.val() });
+                    });
+                    // Firebase returns ascending for limitToLast, so reverse for descending balance
+                    usersArray.reverse(); 
+
+                    usersArray.forEach((user, index) => {
+                        const li = document.createElement('li');
+                        if (currentUser && user.id === currentUser.id) {
+                            li.classList.add('current-user-entry');
+                        }
+                        const rank = index + 1;
+                        let kingIconHtml = '';
+                        if (rank === 1) {
+                            kingIconHtml = ' <i class="fas fa-crown king-icon"></i>';
+                        }
+                        
+                        li.innerHTML = `
+                            <span class="rank">#${rank}</span>
+                            <div class="user-info">
+                                <span class="user-name">${user.firstName || 'User'} (${user.username || 'anon'}) ${kingIconHtml}</span>
+                            </div>
+                            <span class="user-score">${(user.balance || 0).toFixed(2)} ৳</span>
+                        `;
+                        leaderboardList.appendChild(li);
+                    });
+                } else {
+                    leaderboardList.innerHTML = '<li>No data available for leaderboard.</li>';
+                }
+                leaderboardLoading.style.display = 'none';
+            }, (error) => {
+                console.error("Leaderboard fetch error:", error);
+                leaderboardList.innerHTML = '<li>Error loading leaderboard.</li>';
+                leaderboardLoading.style.display = 'none';
+            });
         }
 
         // Profile Page Logic
-        function updateProfilePage() {
+        function updateProfilePageUI() {
             if (currentUser && document.getElementById('profile-page').classList.contains('active')) {
                 profileName.textContent = `${currentUser.firstName} ${tgUser.last_name || ''}`;
                 profileId.textContent = currentUser.id;
-                profileBalance.textContent = currentUser.balance.toFixed(2);
-                profileQuizzesToday.textContent = `${currentUser.quizzesTakenToday}/${DAILY_QUIZ_LIMIT}`;
+                profileBalance.textContent = (currentUser.balance || 0).toFixed(2);
+                profileQuizzesToday.textContent = `${currentUser.quizzesTakenToday || 0}/${DAILY_QUIZ_LIMIT}`;
+                profileAdsToday.textContent = `${currentUser.adsWatchedToday || 0}/${DAILY_AD_LIMIT}`;
             }
         }
+        
+        async function loadWithdrawalHistory() {
+            if (!currentUser) return;
+            withdrawalHistoryLoading.style.display = 'block';
+            withdrawalHistoryList.innerHTML = '';
+            noWithdrawalHistoryMessage.style.display = 'none';
+
+            db.ref('withdrawals')
+              .orderByChild('userId')
+              .equalTo(currentUser.id)
+              .on('value', (snapshot) => {
+                withdrawalHistoryList.innerHTML = ''; // Clear for real-time updates
+                if (snapshot.exists()) {
+                    const historyItems = [];
+                    snapshot.forEach(childSnapshot => {
+                        historyItems.push({ id: childSnapshot.key, ...childSnapshot.val() });
+                    });
+                    // Sort by timestamp descending (newest first)
+                    historyItems.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+                    historyItems.forEach(item => {
+                        const li = document.createElement('li');
+                        const date = new Date(item.timestamp).toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'});
+                        const statusClass = `status-${item.status || 'pending'}`;
+                        li.innerHTML = `
+                            <span>${date} - ${item.amount.toFixed(2)} ৳</span>
+                            <span class="status ${statusClass}">${(item.status || 'pending').toUpperCase()}</span>
+                        `;
+                        withdrawalHistoryList.appendChild(li);
+                    });
+                    noWithdrawalHistoryMessage.style.display = 'none';
+                } else {
+                    noWithdrawalHistoryMessage.style.display = 'block';
+                }
+                withdrawalHistoryLoading.style.display = 'none';
+            }, (error) => {
+                console.error("Withdrawal history error:", error);
+                withdrawalHistoryList.innerHTML = '<li>Error loading history.</li>';
+                withdrawalHistoryLoading.style.display = 'none';
+            });
+        }
+
 
         document.getElementById('withdraw-button').onclick = () => {
             if (currentUser) {
                 openModal('withdraw-modal');
             } else {
-                showToast("User data not loaded yet.", 2000);
+                showToast("User data not loaded yet.", "warning");
             }
         };
 
-        // Hold to withdraw logic
+        // Hold to withdraw logic (same as before, but with icons)
         holdToWithdrawButton.addEventListener('mousedown', startHold);
         holdToWithdrawButton.addEventListener('mouseup', cancelHold);
         holdToWithdrawButton.addEventListener('mouseleave', cancelHold);
@@ -754,71 +980,56 @@
 
         function startHold() {
             if (holdToWithdrawButton.disabled) return;
+            playSound('click');
             holdStartTime = Date.now();
             holdProgress.style.transition = `width ${HOLD_DURATION / 1000}s linear`;
             holdProgress.style.width = '100%';
-            holdText.textContent = 'Confirming...';
+            holdText.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Confirming...';
 
             holdTimeout = setTimeout(async () => {
                 const amount = parseFloat(withdrawAmountInput.value);
                 if (isNaN(amount) || amount <= 0) {
                     withdrawMessage.textContent = "Please enter a valid amount.";
-                    withdrawMessage.style.color = 'var(--error-color)';
-                    resetHoldButton();
-                    return;
+                    withdrawMessage.style.color = 'var(--error-color)'; resetHoldButton(); return;
                 }
                 if (amount < MIN_WITHDRAWAL) {
                     withdrawMessage.textContent = `Minimum withdrawal is ${MIN_WITHDRAWAL} ৳.`;
-                    withdrawMessage.style.color = 'var(--error-color)';
-                    resetHoldButton();
-                    return;
+                    withdrawMessage.style.color = 'var(--error-color)'; resetHoldButton(); return;
                 }
-                if (amount > MAX_WITHDRAWAL) {
+                 if (amount > MAX_WITHDRAWAL) {
                     withdrawMessage.textContent = `Maximum withdrawal is ${MAX_WITHDRAWAL} ৳.`;
-                    withdrawMessage.style.color = 'var(--error-color)';
-                    resetHoldButton();
-                    return;
+                    withdrawMessage.style.color = 'var(--error-color)'; resetHoldButton(); return;
                 }
                 if (amount > currentUser.balance) {
                     withdrawMessage.textContent = "Insufficient balance.";
-                    withdrawMessage.style.color = 'var(--error-color)';
-                    resetHoldButton();
-                    return;
+                    withdrawMessage.style.color = 'var(--error-color)'; resetHoldButton(); return;
                 }
 
-                // Process withdrawal
                 holdToWithdrawButton.disabled = true;
-                holdText.textContent = 'Processing...';
+                holdText.innerHTML = '<i class="fas fa-cogs"></i> Processing...';
 
                 const withdrawalData = {
-                    userId: currentUser.id,
-                    username: currentUser.username,
-                    amount: amount,
-                    timestamp: new Date().toISOString(),
-                    status: 'pending'
+                    userId: currentUser.id, username: currentUser.username,
+                    firstName: currentUser.firstName, // Good to store for admin panel
+                    amount: amount, timestamp: new Date().toISOString(), status: 'pending'
                 };
 
                 const withdrawalId = await pushData('withdrawals', withdrawalData);
 
                 if (withdrawalId) {
-                    currentUser.balance -= amount;
-                    await updateData(`users/${currentUser.id}`, { balance: currentUser.balance });
-                    
-                    updateBalanceDisplay();
-                    updateProfilePage();
-                    
-                    withdrawMessage.textContent = `Withdrawal request for ${amount.toFixed(2)} ৳ submitted successfully!`;
-                    withdrawMessage.style.color = 'var(--success-color)';
-                    showToast("Withdrawal request submitted!", 3000);
-                    
-                    // Optional: Close modal after a delay or change content
-                    setTimeout(() => {
-                        closeModal('withdraw-modal');
-                        // Potentially update UI related to "wallet link after withdrawal"
-                    }, 2000);
+                    // Deduct balance
+                    const newBalance = currentUser.balance - amount;
+                    await updateData(`users/${currentUser.id}`, { balance: newBalance });
+                    // currentUser.balance will update via listener, which will refresh UI
 
+                    playSound('coin'); // Or a specific withdrawal sound
+                    withdrawMessage.textContent = `Withdrawal for ${amount.toFixed(2)} ৳ submitted!`;
+                    withdrawMessage.style.color = 'var(--success-color)';
+                    showToast("Withdrawal request submitted!", "success");
+                    
+                    setTimeout(() => { closeModal('withdraw-modal'); }, 2500);
                 } else {
-                    withdrawMessage.textContent = "Failed to submit withdrawal. Please try again.";
+                    withdrawMessage.textContent = "Failed to submit withdrawal. Try again.";
                     withdrawMessage.style.color = 'var(--error-color)';
                     resetHoldButton();
                     holdToWithdrawButton.disabled = false;
@@ -826,132 +1037,114 @@
 
             }, HOLD_DURATION);
         }
-        
-        function cancelHold() {
-            clearTimeout(holdTimeout);
-            if (Date.now() - holdStartTime < HOLD_DURATION) { // Not held long enough
-                 resetHoldButton();
+        function cancelHold() { clearTimeout(holdTimeout); if (Date.now() - (holdStartTime || Date.now()) < HOLD_DURATION) resetHoldButton(); }
+        function resetHoldButton() {
+            holdProgress.style.transition = 'width 0.1s linear';
+            holdProgress.style.width = '0%';
+            holdText.innerHTML = '<i class="fas fa-hand-paper"></i> Press & Hold to Confirm (2s)';
+        }
+
+        // Ad Logic Enhanced
+        function updateAdButtonStatus() {
+            if (!currentUser) return;
+            
+            const adsLeft = DAILY_AD_LIMIT - (currentUser.adsWatchedToday || 0);
+            adsRemainingTodayDisplay.textContent = `${adsLeft > 0 ? adsLeft : 0}/${DAILY_AD_LIMIT}`;
+
+            if (currentUser.adsWatchedToday >= DAILY_AD_LIMIT) {
+                watchAdButton.disabled = true;
+                watchAdButton.innerHTML = '<i class="fas fa-times-circle"></i> Daily Ad Limit Reached';
+                adCooldownMessage.style.display = 'none';
+                if(adCooldownInterval) clearInterval(adCooldownInterval);
+                return;
+            }
+
+            const now = Date.now();
+            const timeSinceLastAd = (now - (currentUser.lastAdWatchedTimestamp || 0)) / 1000;
+
+            if (timeSinceLastAd < AD_COOLDOWN_SECONDS) {
+                watchAdButton.disabled = true;
+                let remainingCooldown = Math.ceil(AD_COOLDOWN_SECONDS - timeSinceLastAd);
+                adCooldownMessage.textContent = `Next ad in ${remainingCooldown}s`;
+                adCooldownMessage.style.display = 'block';
+                watchAdButton.innerHTML = `<i class="fas fa-hourglass-half"></i> Ad Cooldown`;
+                
+                if (adCooldownInterval) clearInterval(adCooldownInterval);
+                adCooldownInterval = setInterval(() => {
+                    remainingCooldown--;
+                    if (remainingCooldown <= 0) {
+                        clearInterval(adCooldownInterval);
+                        adCooldownMessage.style.display = 'none';
+                        watchAdButton.disabled = false;
+                        watchAdButton.innerHTML = '<i class="fas fa-video"></i> Watch Ad & Earn';
+                    } else {
+                        adCooldownMessage.textContent = `Next ad in ${remainingCooldown}s`;
+                    }
+                }, 1000);
+            } else {
+                watchAdButton.disabled = false;
+                watchAdButton.innerHTML = '<i class="fas fa-video"></i> Watch Ad & Earn';
+                adCooldownMessage.style.display = 'none';
+                if(adCooldownInterval) clearInterval(adCooldownInterval);
             }
         }
 
-        function resetHoldButton() {
-            holdProgress.style.transition = 'width 0.1s linear'; // Fast reset
-            holdProgress.style.width = '0%';
-            holdText.textContent = 'Press & Hold to Confirm (2s)';
-        }
 
-        // Ad Logic
         watchAdButton.onclick = () => {
+            playSound('click');
+            if (watchAdButton.disabled) return; // Already handled by updateAdButtonStatus
+
             watchAdButton.disabled = true;
-            watchAdButton.textContent = 'Loading Ad...';
+            watchAdButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading Ad...';
 
             if (typeof show_9303248 === 'function') {
                  show_9303248().then(async () => {
-                    showToast('Ad watched! You earned 0.1 ৳.', 3000);
-                    currentUser.balance += 0.1;
-                    await updateData(`users/${currentUser.id}`, { balance: currentUser.balance });
-                    updateBalanceDisplay();
-                    updateProfilePage();
-                    watchAdButton.disabled = false;
-                    watchAdButton.textContent = 'Watch Ad & Earn';
+                    playSound('coin');
+                    showToast('Ad watched! You earned 0.10 ৳.', "success");
+                    
+                    const updates = {
+                        balance: (currentUser.balance || 0) + 0.10,
+                        adsWatchedToday: (currentUser.adsWatchedToday || 0) + 1,
+                        lastAdWatchedTimestamp: Date.now()
+                    };
+                    await updateData(`users/${currentUser.id}`, updates);
+                    // currentUser and UI will update via listener
+                    // updateAdButtonStatus(); // This will be called by listener
                 }).catch(error => {
                     console.error("Ad SDK error:", error);
-                    showToast('Ad not available or error. Try again later.', 3000);
-                    watchAdButton.disabled = false;
-                    watchAdButton.textContent = 'Watch Ad & Earn';
+                    showToast('Ad not available or error. Try again.', "error");
+                    updateAdButtonStatus(); // Re-enable button if ad fails
                 });
             } else {
-                showToast('Ad SDK not loaded. Cannot show ad.', 3000);
-                console.error("Ad function show_9303248 not defined.");
-                watchAdButton.disabled = false;
-                watchAdButton.textContent = 'Watch Ad & Earn';
-                // For testing without real ad SDK:
-                // (async () => {
-                //     showToast('Ad watched! You earned 0.1 ৳.', 3000);
-                //     currentUser.balance += 0.1;
-                //     await updateData(`users/${currentUser.id}`, { balance: currentUser.balance });
-                //     updateBalanceDisplay();
-                //     updateProfilePage();
-                //     watchAdButton.disabled = false;
-                //     watchAdButton.textContent = 'Watch Ad & Earn';
-                // })();
+                showToast('Ad SDK not available.', "error");
+                updateAdButtonStatus(); // Re-enable button
             }
         };
 
 
         // Initialize App
         window.onload = () => {
-            // Initialize Firebase
             if (typeof firebase !== 'undefined' && typeof firebase.initializeApp === 'function') {
                 try {
                     firebase.initializeApp(firebaseConfig);
                     db = firebase.database();
-                } catch (e) {
-                    console.error("Firebase initialization error:", e);
-                    document.body.innerHTML = "Error initializing application. Please contact support.";
-                    return;
-                }
-            } else {
-                 console.error("Firebase SDK not loaded.");
-                 document.body.innerHTML = "Critical error: Firebase SDK failed to load. App cannot start.";
-                 return;
-            }
-
+                } catch (e) { console.error("Firebase init error:", e); document.body.innerHTML = "Error initializing app."; return; }
+            } else { console.error("Firebase SDK not loaded."); document.body.innerHTML = "Critical error: Firebase SDK failed."; return; }
 
             Telegram.WebApp.ready();
-            Telegram.WebApp.expand(); // Make the web app full height
-
-            // Set background color from Telegram theme if available (optional, user asked for pink)
-            // document.body.style.backgroundColor = Telegram.WebApp.themeParams.bg_color || '#FFF0F5';
-            // Forcing pink as requested
+            Telegram.WebApp.expand();
             document.body.style.backgroundColor = 'var(--background-light)';
 
-
-            if (db) { // Ensure db is initialized before proceeding
+            if (db) {
                  initializeUser();
             } else {
-                console.error("Database not initialized. User initialization skipped.");
-                // Display an error message to the user.
-                quizArea.innerHTML = "<p>Application critical error. Database connection failed.</p>";
+                quizArea.innerHTML = "<p>DB connection failed.</p>";
             }
 
-            // Close modal if clicked outside content
-            window.onclick = function(event) {
-                if (event.target == withdrawModal) {
-                    closeModal('withdraw-modal');
-                }
+            window.onclick = function(event) { // Close modal on outside click
+                if (event.target == withdrawModal) closeModal('withdraw-modal');
             }
         };
-
-        // Sample Data for Firebase (for testing if database is empty)
-        // You would add this directly to your Firebase console
-        /*
-        Firebase Realtime Database Structure:
-
-        /quizzes
-          /quiz1
-            question: "What color is the Telegram logo?"
-            options: ["Blue", "Green", "Pink", "Red"]
-            answer: "Blue"
-            coins: 10
-          /quiz2
-            question: "What is 2 + 2 * 2?"
-            options: ["4", "6", "8", "2"]
-            answer: "6"
-            coins: 5
-          /quiz3
-            question: "Which planet is known as the Red Planet?"
-            options: ["Earth", "Mars", "Jupiter", "Venus"]
-            answer: "Mars"
-            coins: 8
-        
-        /users
-          / (user data will be populated here by the app)
-
-        /withdrawals
-          / (withdrawal requests will be populated here by the app)
-        */
-
     </script>
 </body>
 </html>
